@@ -1,5 +1,6 @@
 #!/bin/bash
 #Script to setup kerberos in one click! :)
+#Author - Kuldeep Kulkarni (http://crazyadmins.com)
 #############
 
 LOC=`pwd`
@@ -8,24 +9,29 @@ source $LOC/$PROP
 
 #############
 
+ts()
+{
+	echo "`date +%Y-%m-%d,%H:%M:%S`"
+}
+
 setup_kdc()
 {
 
-	echo -e "Installing kerberos RPMs"
+	echo -e "\n`ts` Installing kerberos RPMs"
 	yum -y install krb5-server krb5-libs krb5-workstation
-	echo -e "Configuring Kerberos"
+	echo -e "\n`ts` Configuring Kerberos"
 	sed -i.bak "s/EXAMPLE.COM/$REALM/g" /etc/krb5.conf
 	sed -i.bak "s/kerberos.example.com/$KDC_HOST/g" /etc/krb5.conf
 	kdb5_util create -s -P hadoop
-	echo -e "Starting KDC services"
+	echo -e "\n`ts` Starting KDC services"
 	/etc/rc.d/init.d/krb5kdc start
 	/etc/rc.d/init.d/kadmin start
 	chkconfig krb5kdc on
 	chkconfig kadmin on
-	echo -e "Creating admin principal"
+	echo -e "\n`ts` Creating admin principal"
 	kadmin.local -q "addprinc -pw hadoop admin/admin"
 	sed -i.bak "s/EXAMPLE.COM/$REALM/g" /var/kerberos/krb5kdc/kadm5.acl
-	echo -e "Restarting kadmin"
+	echo -e "\n`ts` Restarting kadmin"
 	/etc/rc.d/init.d/kadmin restart
 }
 
@@ -96,37 +102,36 @@ create_payload()
 
 configure_kerberos()
 {
-	echo "Adding KERBEROS Service to cluster"
+	echo -e "\n`ts` Adding KERBEROS Service to cluster"
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X POST http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services/KERBEROS
-	echo "Adding KERBEROS_CLIENT component to the KERBEROS service"
+	echo -e "\n`ts` Adding KERBEROS_CLIENT component to the KERBEROS service"
 	sleep 1
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X POST http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services/KERBEROS/components/KERBEROS_CLIENT
 	create_payload service
 	sleep 1
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d @"$LOC"/payload http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME
-	echo "Creating the KERBEROS_CLIENT host components for each host"
+	echo -e "\n `ts` Creating the KERBEROS_CLIENT host components for each host"
 
 		for client in `echo $KERBEROS_CLIENTS|tr ',' ' '`;
 		do
 			curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X POST -d '{"host_components" : [{"HostRoles" : {"component_name":"KERBEROS_CLIENT"}}]}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/hosts?Hosts/host_name=$client
 			sleep 1
 		done
-	echo "Installing the KERBEROS service and components"
+	echo -e "\n`ts` Installing the KERBEROS service and components"
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d '{"ServiceInfo": {"state" : "INSTALLED"}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services/KERBEROS
-	echo "Sleeping for 1 minute"
+	echo -e "\n`ts` Sleeping for 1 minute"
 	sleep 60
-	echo -e "Stopping all the services\nSleeping for 2 minutes"
+	echo -e "\n`ts` Stopping all the services\nSleeping for 2 minutes"
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d '{"ServiceInfo": {"state" : "INSTALLED"}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services
 	sleep 120
-	echo "Enabling Kerberos"
+	echo -e "\n`ts` Enabling Kerberos"
 	create_payload credentials
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d @$LOC/payload http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME
 	sleep 1
-	echo "Starting all services"
+	echo -e "\n`ts` Starting all services"
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d '{"ServiceInfo": {"state" : "STARTED"}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services
-	echo -e "Please check Ambari UI\nThank You!"
+	echo -e "\n`ts` Please check Ambari UI\nThank You! :)"
 }
 
-
-setup_kdc
-configure_kerberos
+setup_kdc|tee -a $LOC/Kerb_setup.log
+configure_kerberos|tee -a $LOC/Kerb_setup.log

@@ -1,8 +1,11 @@
-CLUSTER_NAME=test1
+CLUSTER_NAME=Sandbox
 AMBARI_ADMIN_USER=admin
 AMBARI_ADMIN_PASSWORD=admin
-AMBARI_HOST=test1-ambari-server.hwxblr.com
-KDC_HOST=test1-ambari-server.hwxblr.com
+AMBARI_HOST=sandbox.hortonworks.com
+KDC_HOST=sandbox.hortonworks.com
 REALM=HWX.COM
-KERBEROS_CLIENTS=n4.hwxblr.com,n3.hwxblr.com,n2.hwxblr.com,n1.hwxblr.com
-#Note - Admin princial is admin/admin and password is hadoop
+KERBEROS_CLIENTS=sandbox.hortonworks.com
+
+##### Notes #####
+#1. KERBEROS_CLIENTS - Comma separated list of Kerberos clients in case of multinode cluster
+#2. Admin princial is admin/admin and password is hadoop
