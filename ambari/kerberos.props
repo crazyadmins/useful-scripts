@@ -1,0 +1,8 @@
+CLUSTER_NAME=test1
+AMBARI_ADMIN_USER=admin
+AMBARI_ADMIN_PASSWORD=admin
+AMBARI_HOST=test1-ambari-server.hwxblr.com
+KDC_HOST=test1-ambari-server.hwxblr.com
+REALM=HWX.COM
+KERBEROS_CLIENTS=n4.hwxblr.com,n3.hwxblr.com,n2.hwxblr.com,n1.hwxblr.com
+#Note - Admin princial is admin/admin and password is hadoop
