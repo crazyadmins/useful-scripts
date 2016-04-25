@@ -126,7 +126,7 @@ configure_kerberos()
 	echo -e "\n`ts` Enabling Kerberos"
 	create_payload credentials
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d @$LOC/payload http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME
-        sleep 1
+        sleep 3
         echo -e "\n`ts` Starting all services"
  	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d '{"ServiceInfo": {"state" : "STARTED"}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services
  	echo -e "\n`ts` Please check Ambari UI for the progress."
@@ -135,6 +135,7 @@ configure_kerberos()
 start_stale_services()
 {
 	echo -e "\n`ts` Sleeping for 2 minutes and the will restart all the services with stale configs!"
+	sleep 120
 	echo "curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD http://$AMBARI_HOST:8080/api/v1/clusters/Sandbox/host_components?HostRoles/stale_configs=true&fields=HostRoles/service_name,HostRoles/host_name&minimal_response=false"> /tmp/curl_ambari.sh
 	sh /tmp/curl_ambari.sh 1 > /tmp/stale_services_json 2>/dev/null
 	sleep 1
