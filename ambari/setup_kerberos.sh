@@ -2,11 +2,9 @@
 #Script to setup kerberos in one click! :)
 #Author - Kuldeep Kulkarni (http://crazyadmins.com)
 #############
-
 LOC=`pwd`
 PROP=kerberos.props
 source $LOC/$PROP
-
 #############
 
 ts()
@@ -134,5 +132,21 @@ configure_kerberos()
 	echo -e "\n`ts` Please check Ambari UI\nThank You! :)"
 }
 
+start_stale_services()
+{
+	echo "curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD http://$AMBARI_HOST:8080/api/v1/clusters/Sandbox/host_components?HostRoles/stale_configs=true&fields=HostRoles/service_name,HostRoles/host_name&minimal_response=false"> /tmp/curl_ambari.sh
+	sh /tmp/curl_ambari.sh 1 > /tmp/stale_services_json 2>/dev/null
+	sleep 1
+	#grep host_components /tmp/stale_services_json|grep -v stale|cut -d':' -f'2'-|cut -d',' -f1 > /tmp/list_of_components
+	grep host_components /tmp/stale_services_json|grep -v stale|rev|cut -d'"' -f2|rev > /tmp/list_of_components
+	for URL in `cat /tmp/list_of_components`
+	do
+		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "INSTALLED"}}' "$URL"
+		sleep 1
+		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "STARTED"}}' "$URL"
+	done
+}
+
 setup_kdc|tee -a $LOC/Kerb_setup.log
 configure_kerberos|tee -a $LOC/Kerb_setup.log
+start_stale_services|tee -a $LOC/Kerb_setup.log
