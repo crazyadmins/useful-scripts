@@ -126,10 +126,6 @@ configure_kerberos()
 	echo -e "\n`ts` Enabling Kerberos"
 	create_payload credentials
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d @$LOC/payload http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME
-	sleep 1
-	echo -e "\n`ts` Starting all services"
-	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d '{"ServiceInfo": {"state" : "STARTED"}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services
-	echo -e "\n`ts` Please check Ambari UI\nThank You! :)"
 }
 
 start_stale_services()
@@ -137,14 +133,15 @@ start_stale_services()
 	echo "curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD http://$AMBARI_HOST:8080/api/v1/clusters/Sandbox/host_components?HostRoles/stale_configs=true&fields=HostRoles/service_name,HostRoles/host_name&minimal_response=false"> /tmp/curl_ambari.sh
 	sh /tmp/curl_ambari.sh 1 > /tmp/stale_services_json 2>/dev/null
 	sleep 1
-	#grep host_components /tmp/stale_services_json|grep -v stale|cut -d':' -f'2'-|cut -d',' -f1 > /tmp/list_of_components
 	grep host_components /tmp/stale_services_json|grep -v stale|rev|cut -d'"' -f2|rev > /tmp/list_of_components
-	for URL in `cat /tmp/list_of_components`
+	egrep 'RANGER|HDFS|NAMENODE' /tmp/list_of_components > /tmp/list_of_components_final
+	egrep -v 'RANGER|HDFS|NAMENODE' /tmp/list_of_components >> /tmp/list_of_components_final
+	for URL in `cat /tmp/list_of_components_final`
 	do
-		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "INSTALLED"}}' "$URL"
-		sleep 1
 		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "STARTED"}}' "$URL"
+		sleep 1
 	done
+	echo -e "\n`ts` Please check Ambari UI\nThank You! :)"
 }
 
 setup_kdc|tee -a $LOC/Kerb_setup.log
