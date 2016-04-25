@@ -143,9 +143,9 @@ start_stale_services()
 	egrep -v 'RANGER|HDFS|NAMENODE' /tmp/list_of_components >> /tmp/list_of_components_final
 	for URL in `cat /tmp/list_of_components_final`
 	do
-		echo curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "INSTALLED"}}' "$URL"
+		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "INSTALLED"}}' "$URL"
 		sleep 1
-		echo curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "STARTED"}}' "$URL"
+		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "STARTED"}}' "$URL"
 	done
 	echo -e "\n\n\n`ts` Thank You! :)\n\n\n"
 }
