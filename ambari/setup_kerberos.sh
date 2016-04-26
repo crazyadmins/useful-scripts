@@ -140,14 +140,18 @@ start_stale_services()
 	sh /tmp/curl_ambari.sh 1 > /tmp/stale_services_json 2>/dev/null
 	sleep 1
 	grep host_components /tmp/stale_services_json|grep -v stale|rev|cut -d'"' -f2|rev > /tmp/list_of_components
-	egrep 'RANGER|HDFS|NAMENODE' /tmp/list_of_components > /tmp/list_of_components_final
-	egrep -v 'RANGER|HDFS|NAMENODE' /tmp/list_of_components >> /tmp/list_of_components_final
+	egrep 'RANGER|DATANODE|HDFS|NAMENODE' /tmp/list_of_components > /tmp/list_of_components_final
+	egrep -v 'RANGER|DATANODE|HDFS|NAMENODE' /tmp/list_of_components >> /tmp/list_of_components_final
 	for URL in `cat /tmp/list_of_components_final`
 	do
 		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "INSTALLED"}}' "$URL"
-		sleep 1
-		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "STARTED"}}' "$URL"
+		sleep 0.5
 	done
+        for URL in `cat /tmp/list_of_components_final`
+        do
+                curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"HostRoles": {"state": "STARTED"}}' "$URL"
+		sleep 0.5
+        done
 	echo -e "\n\n\n`ts` Thank You! :)\n\n\n"
 }
 
