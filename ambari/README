@@ -16,6 +16,10 @@ git clone https://github.com/crazyadmins/useful-scripts.git
 
 e.g. sh setup_kerberos.sh
 
-Note - Please run setup_kerberos.sh from KDC_HOST only, you don't need to setup or configure KDC, this script will do everything for you.
+Notes:
+
+1. Please run setup_kerberos.sh from KDC_HOST only, you don't need to setup or configure KDC, this script will do everything for you.
+
+2. If you are running script on Sandbox then please turn OFF maintenance mode for HDFS and turn ON maintenance mode for Zepplin Notebook before executing the script.
 
 For more information, please refer our website http://crazyadmins.com
