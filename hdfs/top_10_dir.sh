@@ -1,5 +1,5 @@
 #!/bin/bash
-#Script developed by - Kuldeep Kulkarni
+#Script developed by - Kuldeep Kulkarni (http://crazyadmins.com)
 #######################################
 
 echo -e "Please wait while we calculate size to determine top 10 directories on HDFS"
