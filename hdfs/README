@@ -1,0 +1,5 @@
+This script will identify and print top 10 directories on the HDFS. This script is useful for Hadoop Administrators to find largest directories and do cleanup :)
+
+Note - Please run script by hdfs superuser ( default - hdfs user )
+
+Thank you - http://crazyadmins.com
