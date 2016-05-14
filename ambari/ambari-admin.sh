@@ -41,7 +41,7 @@ list_installed_services()
 	fi
 }
 
-indivisual_service_action()
+individual_service_action()
 {
 	#$1 - start/stop $2 - service name
 	curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"'"Putting $2 in $1 state"'"}, "Body": {"ServiceInfo": {"state": "'"$1"'"}}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services/$2
@@ -77,7 +77,7 @@ then
 	grep -wq $SERVICE_NAME /tmp/list_all_services
 	if [ $? -eq 0 ]
 	then
-		indivisual_service_action STARTED $SERVICE_NAME
+		individual_service_action STARTED $SERVICE_NAME
 	else
 		echo -e "\nWrong service name!\n"
 		usage
@@ -89,7 +89,7 @@ then
         grep -wq $SERVICE_NAME /tmp/list_all_services 
         if [ $? -eq 0 ]
         then
-                indivisual_service_action INSTALLED $SERVICE_NAME
+                individual_service_action INSTALLED $SERVICE_NAME
         else
                 echo -e "\nWrong service name!\n"
                 usage
