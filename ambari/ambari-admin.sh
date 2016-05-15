@@ -1,6 +1,6 @@
 #!/bin/bash
 #Author - Kuldeep Kulkarni ( http://crazyadmins.com )
-#Note - Please do not use this script..work is still in progress! :)
+#Note - Testing is still in progress for this! :)
 ####################################################
 
 #Globals
