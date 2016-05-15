@@ -1,0 +1,25 @@
+Steps to setup Kerberos authentication using a shell script.
+
+1. Clone repository to your local/one of the node in the cluster
+
+git clone https://github.com/crazyadmins/useful-scripts.git
+
+2. cd to useful-scripts/ambari/
+
+3. Copy setup_kerberos.sh and ambari.props to the host which you want to setup as KDC Server
+
+4. Please keep setup_kerberos.sh and ambari.props at the same location
+
+5. Edit ambari.props and modify as per your requirements
+
+6. Start installation by simply executing setup_kerberos.sh
+
+e.g. sh setup_kerberos.sh
+
+Notes:
+
+1. Please run setup_kerberos.sh from KDC_HOST only, you don't need to setup or configure KDC, this script will do everything for you.
+
+2. If you are running script on Sandbox then please turn OFF maintenance mode for HDFS and turn ON maintenance mode for Zepplin Notebook before executing the script.
+
+For more information, please refer our website http://crazyadmins.com
