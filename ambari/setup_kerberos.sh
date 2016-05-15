@@ -4,7 +4,7 @@
 #############
 
 LOC=`pwd`
-PROP=kerberos.props
+PROP=ambari.props
 source $LOC/$PROP
 
 #############

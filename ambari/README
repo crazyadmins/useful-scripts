@@ -6,9 +6,9 @@ git clone https://github.com/crazyadmins/useful-scripts.git
 
 2. cd to useful-scripts/ambari/
 
-3. Copy setup_kerberos.sh and kerberos.props to the host which you want to setup as KDC Server
+3. Copy setup_kerberos.sh and ambari.props to the host which you want to setup as KDC Server
 
-4. Please keep setup_kerberos.sh and kerberos.props at the same location
+4. Please keep setup_kerberos.sh and ambari.props at the same location
 
 5. Edit keberos.props and modify as per your requirements
 
