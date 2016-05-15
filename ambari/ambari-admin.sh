@@ -30,7 +30,7 @@ service_action()
 list_installed_services()
 {
 	curl -s -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X GET http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services|grep href|cut -d':' -f2-|rev|cut -d'/' -f1|rev|cut -d'"' -f1|grep ^[A-Z] > /tmp/list_all_services
-	curl -s -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X GET http://sandbox.hortonworks.com:8080/api/v1/hosts|grep host_name|cut -d':' -f2|cut -d'"' -f2|uniq > /tmp/list_all_hosts
+	curl -s -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X GET http://$AMBARI_HOST:8080/api/v1/hosts|grep host_name|cut -d':' -f2|cut -d'"' -f2|uniq > /tmp/list_all_hosts
 		for host in `cat /tmp/list_all_hosts`;do echo -e "\n$(tput setaf 2)$host$(tput sgr 0)\n\n"; curl -s -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X GET http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/hosts/$host/host_components|grep component_name|cut -d',' -f1|tr ':' '|';done > /tmp/list_host_components 
 	if [ "$1" == "show" ]
 	then
