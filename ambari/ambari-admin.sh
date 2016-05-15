@@ -17,7 +17,11 @@ usage()
 	\n$(tput setaf 2)Start/Stop individual service:$(tput sgr 0) $0 [start|stop] <service-name-in-small-caps-letters>
 	\n$(tput setaf 3)e.g.\n$0 start hdfs$(tput sgr 0)\n$(tput setaf 3)$0 stop hdfs$(tput sgr 0)
 	\n$(tput setaf 2)Start/Stop service component:$(tput sgr 0) $0 [start|stop] <component-name-in-small-or-caps-letters> <hostname>$(tput sgr 0)
-	\n$(tput setaf 3)e.g.\n$0 start webhcat_server sandbox.hortonworks.com$(tput sgr 0)\n$(tput setaf 3)$0 stop spark_jobhistoryserver sandbox.hortonworks.com"$(tput sgr 0)
+	\n$(tput setaf 3)e.g.\n$0 start webhcat_server sandbox.hortonworks.com$(tput sgr 0)\n$(tput setaf 3)$0 stop spark_jobhistoryserver sandbox.hortonworks.com$(tput sgr 0)
+	\n$(tput setaf 2)Add/Remove service component:$(tput sgr 0) $0 [add|remove] <component-name-in-small-or-caps-letters> <hostname>$(tput sgr 0)
+	\n$(tput setaf 3)e.g.\n$0 add webhcat_server sandbox.hortonworks.com$(tput sgr 0)\n$(tput setaf 3)$0 remove spark_jobhistoryserver sandbox.hortonworks.com$(tput sgr 0)
+	\n$(tput setaf 2)Backup database for Ambari/Hive/Oozie:$(tput sgr 0) $0 backup [ambari|hive|oozie] <database-type> <database-host>$(tput sgr 0)
+        \n$(tput setaf 3)e.g.\n$0 backup ambari postgresql sandbox.hortonworks.com$(tput sgr 0)\n$(tput setaf 3)$0 backup oozie mysql sandbox.hortonworks.com"$(tput sgr 0)
         exit
 }
 
@@ -53,6 +57,35 @@ host_component_action()
 	curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"'"Putting $2 in $1 state"'"}, "HostRoles": {"state": "'"$1"'"}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/hosts/$3/host_components/$2
 }
 
+add_remove_host_component()
+{
+	#$1-add/remove $2-service component name $3-hostname
+	if [ "$1" == add ]
+	then
+		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X POST -d '{"host_components" : [{"HostRoles":{"component_name":"'"$2"'"}}] }' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/hosts?Hosts/host_name=$3
+		host_component_action INSTALLED $2 $3
+		echo -e "\n$(tput setaf 2)Sleeping for 5 seconds before starting $2"$(tput sgr 0)
+		sleep 5
+		host_component_action STARTED $2 $3
+	elif [ "$1" == remove ]
+	then
+		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -H "X-Requested-By: ambari" -X DELETE http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/hosts/$3/host_components/$2
+	fi
+}
+
+backup_db()
+{
+	#$1 - Service name $2 - database type $3 - database host
+
+	if [ "$2" == "mysql" ]
+	then
+		echo -e "\n$(tput setaf 2)Please enter mysql db password for $1 user$(tput sgr 0)"
+		mysqldump -h $3 -u"$1" -p $1 > ~/"$1"_db_backup_`date +%Y_%m_%d_%H_%M`.sql
+	elif [ "$2" == "postgresql" ]
+	then
+		pg_dump -h $3 -W -U $1 $1 > ~/"$1"_db_backup_`date +%Y_%m_%d_%H_%M`.sql
+	fi	
+}
 
 #Main starts here
 
@@ -124,6 +157,36 @@ then
                 echo -e "\nEither hostname or component name is wrong!\nPlease run script with listall to check hostnames and their components!\n"
                 usage
         fi
+elif [ $# -eq 3 -a "$1" == "add" ]
+then
+        SERVICE_NAME=`echo $2|tr [a-z] [A-Z]`
+        grep -wq $3 /tmp/list_all_hosts
+        HOST_EXIST_STAT=$?
+        if [ $HOST_EXIST_STAT -eq 0 ]
+        then
+                add_remove_host_component add $SERVICE_NAME $3
+        else
+                echo -e "\nHostname provided is not listed under registered hosts!\nPlease run script with listall to check hostnames!\n"
+                usage
+        fi
+elif [ $# -eq 3 -a "$1" == "remove" ]
+then
+        SERVICE_NAME=`echo $2|tr [a-z] [A-Z]`
+        list_installed_services
+        grep -wq $SERVICE_NAME /tmp/list_host_components
+        SERVICE_EXIST_STAT=$?
+        grep -wq $3 /tmp/list_all_hosts
+        HOST_EXIST_STAT=$?
+        if [ $SERVICE_EXIST_STAT -eq 0 -a $HOST_EXIST_STAT -eq 0 ]
+        then
+                add_remove_host_component remove $SERVICE_NAME $3
+        else
+                echo -e "\nEither hostname or component name is wrong!\nPlease run script with listall to check hostnames and their components!\n"
+                usage
+        fi
+elif [ $# -eq 4 -a "$1" == "backup" -a "$3" == "mysql" -o "$3" == "postgresql" ]
+then
+	backup_db $2 $3 $4
 else
 	usage
 fi
