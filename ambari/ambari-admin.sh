@@ -21,14 +21,25 @@ usage()
 	\n$(tput setaf 2)Add/Remove service component:$(tput sgr 0) $0 [add|remove] <component-name-in-small-or-caps-letters> <hostname>$(tput sgr 0)
 	\n$(tput setaf 3)e.g.\n$0 add webhcat_server sandbox.hortonworks.com$(tput sgr 0)\n$(tput setaf 3)$0 remove spark_jobhistoryserver sandbox.hortonworks.com$(tput sgr 0)
 	\n$(tput setaf 2)Backup database for Ambari/Hive/Oozie:$(tput sgr 0) $0 backup [ambari|hive|oozie] <database-type> <database-host>$(tput sgr 0)
-        \n$(tput setaf 3)e.g.\n$0 backup ambari postgresql sandbox.hortonworks.com$(tput sgr 0)\n$(tput setaf 3)$0 backup oozie mysql sandbox.hortonworks.com"$(tput sgr 0)
+        \n$(tput setaf 3)e.g.\n$0 backup ambari postgresql sandbox.hortonworks.com$(tput sgr 0)\n$(tput setaf 3)$0 backup oozie mysql sandbox.hortonworks.com$(tput sgr 0)
+        \n$(tput setaf 2)Restart services with Stale configs:$(tput sgr 0) $0 restart refresh"$(tput sgr 0)
         exit
 }
 
 service_action()
 {
 	#1 - service action i.e. start/stop/restart
-	curl -H 'X-Requested-By:ambari' -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d '{"RequestInfo": {"context" :"'"Putting All Services in $1 state"'"}, "ServiceInfo": {"state" : "'"$1"'"}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services
+	echo -e "\nPutting all the services in $1 state!"
+	curl -s -H 'X-Requested-By:ambari' -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d '{"RequestInfo": {"context" :"'"Putting All Services in $1 state"'"}, "ServiceInfo": {"state" : "'"$1"'"}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services > /tmp/result
+	request_id=`cat /tmp/result|grep id|awk '{print $3}'|cut -d',' -f1`
+	progressPercent=`curl -s --user $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -H 'X-Requested-By:SupportLab' -X GET http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/requests/$request_id | grep progress_percent | awk '{print $3}' | cut -d . -f 1`
+  	echo " Progress: $progressPercent"
+  	while [[ `echo $progressPercent | grep -v 100` ]]; do
+    		progressPercent=`curl -s --user $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -H 'X-Requested-By:SupportLab' -X GET http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/requests/$request_id | grep progress_percent | awk '{print $3}' | cut -d . -f 1`
+		tput cuu1
+    		echo "$(tput setaf 2)[ Progress: $progressPercent % ]$(tput sgr 0)"
+    		sleep 2
+  	done
 }	
 
 list_installed_services()
@@ -85,6 +96,23 @@ backup_db()
 	then
 		pg_dump -h $3 -W -U $1 $1 > ~/"$1"_db_backup_`date +%Y_%m_%d_%H_%M`.sql
 	fi	
+}
+
+restart_stale_configs()
+{
+	echo "curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD http://$AMBARI_HOST:8080/api/v1/clusters/Sandbox/host_components?HostRoles/stale_configs=true&fields=HostRoles/service_name,HostRoles/host_name&minimal_response=false"> /tmp/curl_ambari.sh
+	sh /tmp/curl_ambari.sh 1 > /tmp/stale_services_json 2>/dev/null
+	sleep 1
+	grep host_components /tmp/stale_services_json|grep -v stale|rev|cut -d'"' -f2|rev > /tmp/list_of_components
+	egrep 'RANGER|DATANODE|HDFS|NAMENODE' /tmp/list_of_components > /tmp/list_of_components_final
+	egrep -v 'RANGER|DATANODE|HDFS|NAMENODE' /tmp/list_of_components >> /tmp/list_of_components_final
+	for URL in `cat /tmp/list_of_components_final`
+	do
+		SERVICE_NAME=`echo $URL|rev|cut -d'/' -f1|rev`	
+		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"'"Stopping $SERVICE_NAME"'"}, "HostRoles": {"state": "INSTALLED"}}' "$URL"
+		sleep 0.5
+		curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -H 'X-Requested-By: ambari' -X PUT -d '{"RequestInfo": {"context" :"'"Starting $SERVICE_NAME"'"}, "HostRoles": {"state": "STARTED"}}' "$URL"
+	done
 }
 
 #Main starts here
@@ -184,6 +212,9 @@ then
                 echo -e "\nEither hostname or component name is wrong!\nPlease run script with listall to check hostnames and their components!\n"
                 usage
         fi
+elif [ $# -eq 2 -a "$1" == "restart" -a "$2" == "refresh" ]
+then
+	restart_stale_configs	
 elif [ $# -eq 4 -a "$1" == "backup" -a "$3" == "mysql" -o "$3" == "postgresql" ]
 then
 	backup_db $2 $3 $4
