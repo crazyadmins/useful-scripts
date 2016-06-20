@@ -128,8 +128,8 @@ configure_kerberos()
 	echo -e "\n`ts` Enabling Kerberos"
 	create_payload credentials
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d @$LOC/payload http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME
-	sleep 120
 	echo -e "\n`ts` Starting all services after 2 minutes..Please be patient :)"
+	sleep 120
 	curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X PUT -d '{"ServiceInfo": {"state" : "STARTED"}}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/services
 	echo -e "\n`ts` Please check Ambari UI\nThank You! :)"
 }
