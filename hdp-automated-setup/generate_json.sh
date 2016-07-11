@@ -2,7 +2,7 @@
 ########
 # Author: Kuldeep Kulkarni 
 # Description: This script does the Magic of automating HDP install using Ambari Blueprints
-set -x
+#set -x
 
 #Globals
 LOC=`pwd`
