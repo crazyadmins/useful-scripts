@@ -44,14 +44,19 @@ bootstrap_hosts()
         for host in `echo $AMBARI_AGENTS`
         do
                 HOST=`echo $host`.$DOMAIN_NAME
+		ssh -o "StrictHostKeyChecking no" root@$HOST rm -rf /etc/yum.repos.d/ambari-*.repo
                 scp -o "StrictHostKeyChecking no" /tmp/ambari-"$AMBARIVERSION".repo root@$HOST:/etc/yum.repos.d/
                 scp -o "StrictHostKeyChecking no" /tmp/hosts root@$HOST:/etc/hosts
-		ssh -o "StrictHostKeyChecking no" root@$HOST hostname "$HOST"
-		ssh -o "StrictHostKeyChecking no" root@$HOST service iptables stop
-		ssh -o "StrictHostKeyChecking no" root@$HOST chkconfig iptables off
 		if [ "$OS" == "centos7" ]
 		then
 			ssh -o "StrictHostKeyChecking no" root@$HOST hostnamectl set-hostname "$HOST" --static
+			ssh -o "StrictHostKeyChecking no" root@$HOST systemctl stop firewalld.service 2>/dev/null
+			ssh -o "StrictHostKeyChecking no" root@$HOST systemctl disable firewalld.service
+		elif [ "$OS" == "centos6" ]
+		then
+  	                ssh -o "StrictHostKeyChecking no" root@$HOST hostname "$HOST"
+          	        ssh -o "StrictHostKeyChecking no" root@$HOST service iptables stop
+                	ssh -o "StrictHostKeyChecking no" root@$HOST chkconfig iptables off
 		fi
         done
 }
@@ -77,11 +82,11 @@ setup_ambari_agent()
 setup_hdp()
 {
 	$LOC/generate_json.sh $CLUSTER_PROPERTIES $AMBARI_SERVER_IP
+	echo -e "\n$(tput setaf 2)Please hit http://$AMBARI_SERVER_IP:8080 in your browser and check installation status!\n\nIt would not take more than 5 minutes :)\n\nHappy Hadooping!$(tput sgr 0)"
 }
 
 
 #Main starts here
-
 
 generate_ambari_repo
 prepare_hosts_file
