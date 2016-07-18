@@ -49,6 +49,8 @@ bootstrap_hosts()
                 scp -o "StrictHostKeyChecking no" /tmp/hosts root@$HOST:/etc/hosts
 		if [ "$OS" == "centos7" ]
 		then
+			echo $HOST
+  	                ssh -o "StrictHostKeyChecking no" root@$HOST hostname "$HOST"
 			ssh -o "StrictHostKeyChecking no" root@$HOST hostnamectl set-hostname "$HOST" --static
 			ssh -o "StrictHostKeyChecking no" root@$HOST systemctl stop firewalld.service 2>/dev/null
 			ssh -o "StrictHostKeyChecking no" root@$HOST systemctl disable firewalld.service
