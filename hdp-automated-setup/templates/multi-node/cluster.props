@@ -49,6 +49,7 @@ HDP_2.3_BASE_URL="http://172.26.64.249/hdp/centos6/HDP-2.3.0.0/"
 HDP_2.2_BASE_URL="http://172.26.64.249/hdp/centos6/HDP-2.2.9.0/"
 HDP_2.2_BASE_URL="http://172.26.64.249/hdp/centos6/HDP-2.2.8.0/"
 HDP_2.2_BASE_URL="http://172.26.64.249/hdp/centos6/HDP-2.2.6.0/"
+HDP_2.2_BASE_URL="http://172.26.64.249/hdp/centos6/HDP-2.2.4.8/"
 HDP_2.2_BASE_URL="http://172.26.64.249/hdp/centos6/HDP-2.2.4.2/"
 HDP_2.2_BASE_URL="http://172.26.64.249/hdp/centos6/HDP-2.2.0.0/"
 
