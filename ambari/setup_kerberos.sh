@@ -24,8 +24,8 @@ setup_kdc()
 	sed -i.bak "s/kerberos.example.com/$KDC_HOST/g" /etc/krb5.conf
 	kdb5_util create -s -P hadoop
 	echo -e "\n`ts` Starting KDC services"
-	/etc/rc.d/init.d/krb5kdc start
-	/etc/rc.d/init.d/kadmin start
+	service krb5kdc start
+	service kadmin start
 	chkconfig krb5kdc on
 	chkconfig kadmin on
 	echo -e "\n`ts` Creating admin principal"
