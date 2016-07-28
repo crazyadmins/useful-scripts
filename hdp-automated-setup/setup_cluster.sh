@@ -36,7 +36,7 @@ priority=1" > /tmp/ambari-$AMBARIVERSION.repo
 
 prepare_hosts_file()
 {
-	echo -e "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n::1         localhost localhost.localdomain localhost6 localhost6.localdomain6" > /tmp/hosts
+	echo "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4\n::1         localhost localhost.localdomain localhost6 localhost6.localdomain6" > /tmp/hosts
 	for host in `grep -w HOST[0-9]* $LOC/$CLUSTER_PROPERTIES|cut -d'=' -f2`; do grep $host /etc/hosts >> /tmp/hosts;done
 }	
 
