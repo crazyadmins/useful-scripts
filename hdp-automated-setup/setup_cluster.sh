@@ -10,7 +10,9 @@ then
 fi
 
 #Cleanup
-rm -rf ~/.ssh/known_hosts
+cp ~/.ssh/known_hosts ~/.ssh/known_hosts.bak
+echo "" > ~/.ssh/known_hosts
+
 
 #Globals
 LOC=`pwd`
@@ -85,6 +87,7 @@ setup_hdp()
 {
 	$LOC/generate_json.sh $CLUSTER_PROPERTIES $AMBARI_SERVER_IP
 	echo -e "\n$(tput setaf 2)Please hit http://$AMBARI_SERVER_IP:8080 in your browser and check installation status!\n\nIt would not take more than 5 minutes :)\n\nHappy Hadooping!$(tput sgr 0)"
+	mv ~/.ssh/known_hosts.bak ~/.ssh/known_hosts 
 }
 
 
