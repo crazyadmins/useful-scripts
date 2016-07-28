@@ -27,7 +27,7 @@ HOST3_SERVICES="RESOURCEMANAGER,APP_TIMELINE_SERVER,HISTORYSERVER,NODEMANAGER,DA
 Ambari 2.1.0 / 2.1.1 / 2.1.2.1 / 2.1.2 / 2.2.0.0 / 2.2.1.0 / 2.2.2.0
 
 #Centos 6
-Ambari 2.0.0 / 2.0.1 / 2.0.2 / 2.1.0 / 2.1.1 / 2.1.2.1 / 2.1.2 / 2.2.0.0 / 2.2.1.0 / 2.2.1.1 / 2.2.2.0
+Ambari 2.0.0 / 2.0.1 / 2.0.2 / 2.1.0 / 2.1.1 / 2.1.2.1 / 2.1.2 / 2.2.0.0 / 2.2.1.0 / 2.2.1.1 / 2.2.2.0 / 2.2.2.2-2
 
 ## Available HDP versions ##
 #Centos 7
