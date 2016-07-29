@@ -1,3 +1,5 @@
+#Note - Please visit http://172.26.64.249/versions.htm for available Ambari & HDP versions information.
+
 #######################  EDIT BELOW INFORMATION  #######################
 
 CLUSTERNAME=hdptest
@@ -7,6 +9,9 @@ NUM_OF_NODES=3
 DOMAIN_NAME=openstacklocal
 DEFAULT_PASSWORD=hadoop
 CLUSTER_VERSION=2.4.2.0
+FLAVOR_NAME=m1.large
+KEYPAIR_NAME=support-main
+PVT_KEYFILE=~/.ssh/support-main
 
 #Add your hostnames below ( without FQDN )
 
