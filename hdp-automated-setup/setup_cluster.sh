@@ -1,5 +1,6 @@
 #!/bin/bash
 #Author - Kuldeep Kulkarni
+#Contributor - Ratish Maruthiyodan
 #Script will setup and configure ambari-server/ambari-agents and hdp cluster
 ##########################################################
 
@@ -40,36 +41,60 @@ prepare_hosts_file()
 	for host in `grep -w HOST[0-9]* $LOC/$CLUSTER_PROPERTIES|cut -d'=' -f2`; do grep $host /etc/hosts >> /tmp/hosts;done
 }	
 
+check_sshd_service() {
+        loop=0
+        echo $1
+        nc -w 2 $1 22 > /dev/null
+        while [ $? -eq 1 ]
+        do
+                echo "SSHD is not responding on $1. Sleeping for 10 seconds..."
+                sleep 10
+                loop=$(( $loop + 1 ))
+                if [ $loop -eq 10 ]
+                then
+                        echo -e "\nThere may be some error with the ssh connection or service startup on $1..."
+                        read -p "Would you like to continue waiting for ssh to initialize ? [Y/N] : " choice
+                        if [ "$choice" != "Y" ] && [ "$choice" != "y" ]
+                        then
+                                exit 1
+                        fi
+                fi
+
+                nc -w 2 $1 22 > /dev/null
+        done
+}
+
 bootstrap_hosts()
 {
 	
         for host in `echo $AMBARI_AGENTS`
         do
                 HOST=`echo $host`.$DOMAIN_NAME
-		ssh -o "StrictHostKeyChecking no" root@$HOST rm -rf /etc/yum.repos.d/ambari-*.repo
-                scp -o "StrictHostKeyChecking no" /tmp/ambari-"$AMBARIVERSION".repo root@$HOST:/etc/yum.repos.d/
-                scp -o "StrictHostKeyChecking no" /tmp/hosts root@$HOST:/etc/hosts
+		check_sshd_service $HOST
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST rm -rf /etc/yum.repos.d/ambari-*.repo
+                scp -i $PVT_KEYFILE -o "StrictHostKeyChecking no" /tmp/ambari-"$AMBARIVERSION".repo root@$HOST:/etc/yum.repos.d/
+                scp -i $PVT_KEYFILE -o "StrictHostKeyChecking no" /tmp/hosts root@$HOST:/etc/hosts
 		if [ "$OS" == "centos7" ]
 		then
 			echo $HOST
-  	                ssh -o "StrictHostKeyChecking no" root@$HOST hostname "$HOST"
-			ssh -o "StrictHostKeyChecking no" root@$HOST hostnamectl set-hostname "$HOST" --static
-			ssh -o "StrictHostKeyChecking no" root@$HOST systemctl stop firewalld.service 2>/dev/null
-			ssh -o "StrictHostKeyChecking no" root@$HOST systemctl disable firewalld.service
+  	                ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST hostname "$HOST"
+			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST hostnamectl set-hostname "$HOST" --static
+			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST systemctl stop firewalld.service 2>/dev/null
+			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST systemctl disable firewalld.service
 		elif [ "$OS" == "centos6" ]
 		then
-  	                ssh -o "StrictHostKeyChecking no" root@$HOST hostname "$HOST"
-          	        ssh -o "StrictHostKeyChecking no" root@$HOST service iptables stop
-                	ssh -o "StrictHostKeyChecking no" root@$HOST chkconfig iptables off
+  	                ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST hostname "$HOST"
+          	        ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST service iptables stop
+                	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST chkconfig iptables off
 		fi
         done
 }
 
 setup_ambari_server()
 {
-	ssh -o "StrictHostKeyChecking no" root@$AMBARI_SERVER yum -y install ambari-server
-	ssh -o "StrictHostKeyChecking no" root@$AMBARI_SERVER ambari-server setup -s
-	ssh -o "StrictHostKeyChecking no" root@$AMBARI_SERVER ambari-server start
+	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_SERVER yum -y install ambari-server
+	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_SERVER ambari-server setup -s
+	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_SERVER ambari-server start
 }
 
 setup_ambari_agent()
@@ -77,9 +102,9 @@ setup_ambari_agent()
 	for host in `echo $AMBARI_AGENTS`
 	do
 		AMBARI_AGENT=`echo $host`.$DOMAIN_NAME
-		ssh -o "StrictHostKeyChecking no" root@$AMBARI_AGENT yum -y install ambari-agent
-		ssh -o "StrictHostKeyChecking no" root@$AMBARI_AGENT ambari-agent reset $AMBARI_SERVER 
-		ssh -o "StrictHostKeyChecking no" root@$AMBARI_AGENT service ambari-agent start 
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_AGENT yum -y install ambari-agent
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_AGENT ambari-agent reset $AMBARI_SERVER 
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_AGENT service ambari-agent start 
 	done
 }
 
