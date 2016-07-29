@@ -106,7 +106,8 @@ echo "  ],
 repobuilder()
 {
 #Start of function
-BASE_URL=`grep $CLUSTER_VERSION $LOC/$PROPS|grep BASE|cut -d'=' -f2|sed -e 's/^"//'  -e 's/"$//'|grep $OS|sort -n|tail -1`
+BASE_URL="http://$REPO_SERVER/hdp/$OS/HDP-$CLUSTER_VERSION/"
+
 
 echo "{
 \"Repositories\" : {
@@ -115,7 +116,8 @@ echo "{
 }
 }" > $LOC/repo.json
 
-BASE_URL_UTILS=`grep UTILS $LOC/$PROPS|cut -d'=' -f2|sed -e 's/^"//'  -e 's/"$//'|grep $OS|sort -n|tail -1`
+BASE_URL_UTILS="http://$REPO_SERVER/hdp/$OS/HDP-UTILS-1.1.0.20/"
+
 export BASE_URL_UTILS;
 
 echo "{
