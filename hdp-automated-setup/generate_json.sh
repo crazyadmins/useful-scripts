@@ -158,18 +158,18 @@ curl -H "X-Requested-By: ambari" -X POST -u admin:admin http://$AMBARI_HOST:8080
 ################
 
 #Generate hostmap
-echo -e "`timestamp` Generating hostmap json.."
+printf "`timestamp` Generating hostmap json.."
 hostmap > $LOC/hostmap.json
 echo "`timestamp` Saved $LOC/hostmap.json"
 
 #Generate cluster config json
-echo -e "`timestamp` Generating cluster configuration json"
+printf "`timestamp` Generating cluster configuration json"
 clustermap > $LOC/cluster_config.json
 echo "`timestamp` Saved $LOC/cluster_config.json"
 
 #Create internal repo json 
 repobuilder 
-echo -e "`timestamp` Generating internal repositories json..\n`timestamp` Saved $LOC/repo.json & $LOC/repo-utils.json"
+printf "`timestamp` Generating internal repositories json..\n`timestamp` Saved $LOC/repo.json & $LOC/repo-utils.json"
 
 #Start hdp installation
 installhdp

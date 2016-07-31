@@ -6,7 +6,7 @@
 
 if [ $# -ne 1 ]
 then
-        echo -e "Usage $0 /path-to/cluster.props\nExample: $0 templates/multi-node/cluster.props"
+        printf "Usage $0 /path-to/cluster.props\nExample: $0 templates/multi-node/cluster.props"
         exit
 fi
 
@@ -71,7 +71,7 @@ check_sshd_service() {
                 loop=$(( $loop + 1 ))
                 if [ $loop -eq 10 ]
                 then
-                        echo -e "\nThere may be some error with the ssh connection or service startup on $1..."
+                        printf "\nThere may be some error with the ssh connection or service startup on $1..."
                         read -p "Would you like to continue waiting for ssh to initialize ? [Y/N] : " choice
                         if [ "$choice" != "Y" ] && [ "$choice" != "y" ]
                         then
@@ -111,7 +111,7 @@ bootstrap_hosts()
 
 setup_ambari_server()
 {
-	echo -e "\n\t Installing Ambari-Server"
+	printf "\n\t Installing Ambari-Server"
 
 	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_SERVER yum -y install ambari-server
 	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_SERVER ambari-server setup -s
@@ -120,7 +120,7 @@ setup_ambari_server()
 
 setup_ambari_agent()
 {
-	echo -e "\n\t Installing Ambari-Agents"
+	printf "\n\t Installing Ambari-Agents"
 
 	for host in `echo $AMBARI_AGENTS`
 	do
@@ -134,7 +134,7 @@ setup_ambari_agent()
 setup_hdp()
 {
 	$LOC/generate_json.sh $CLUSTER_PROPERTIES $AMBARI_SERVER_IP
-	echo -e "\n$(tput setaf 2)Please hit http://$AMBARI_SERVER_IP:8080 in your browser and check installation status!\n\nIt would not take more than 5 minutes :)\n\nHappy Hadooping!$(tput sgr 0)"
+	printf "\n$(tput setaf 2)Please hit http://$AMBARI_SERVER_IP:8080 in your browser and check installation status!\n\nIt would not take more than 5 minutes :)\n\nHappy Hadooping!\n$(tput sgr 0)"
 	mv ~/.ssh/known_hosts.bak ~/.ssh/known_hosts 
 }
 

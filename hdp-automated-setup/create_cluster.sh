@@ -18,9 +18,9 @@ bootstrap_mac()
 
 	if [ $openstack_stat -eq 0 ] && [ $nova_stat -eq 0 ] && [ $glance_stat -eq 0 ] && [ $neutron_stat -eq 0 ]
 	then
-		echo -e "Verified that required openstack client packages have been already installed!\nWe are good to go ahead :)"
+		echo "Verified that required openstack client packages have been already installed!\nWe are good to go ahead :)"
 	else
-		echo -e "\nFound missing openstack client package(s)\nGoing ahead to install required client packages.. Enter Your Laptop's user password if prompted\n\n\nPress Enter to continue"
+		printf "\nFound missing openstack client package(s)\nGoing ahead to install required client packages.. Enter Your Laptop's user password if prompted\n\n\nPress Enter to continue"
 		read
 		brew install python
 		sudo pip install python-openstackclient
@@ -46,7 +46,7 @@ find_image()
 	eval req_os_distro=\$$req_os_distro
 	if [ -z req_os_distro ]
 	then
-		echo -e "\nThe mentioned OS image is unavailable. The available images are:"
+		printf "\nThe mentioned OS image is unavailable. The available images are:"
 		glance image-list
 		exit 1
 	fi
@@ -88,7 +88,7 @@ boot_clusternodes()
 
 check_for_duplicates()
 {
-	echo -n "Checking for duplicate hostnames... "
+	printf "\nChecking for duplicate hostnames... "
 	existing_nodes=`nova list | awk -F '|' '{print $3}' | xargs`
 
 	for HOST in `grep -w 'HOST[0-9]*' $LOC/$CLUSTER_PROPERTIES|cut -d'=' -f2`
@@ -96,7 +96,7 @@ check_for_duplicates()
 		echo $existing_nodes | grep -q -w $OS_USERNAME-$HOST
 		if [ $? -eq 0 ]
 		then
-			echo -e "\n\nAn Instance with the name \"$HOST\" already exists. Please choose unique Hosnames"
+			printf "\n\nAn Instance with the name \"$HOST\" already exists. Please choose unique Hosnames"
 			exit 1
 		fi
 	done
@@ -117,7 +117,7 @@ spin()
 	do
 	  for i in "${spin[@]}"
 	  do
-        	echo -ne "\b$i"
+        	printf "\b$i"
 	        sleep 0.12
   	  done
 	done
@@ -142,7 +142,7 @@ check_vm_state()
 				if [ "$?" -ne 0 ]
 				then
 					STARTUP_STATE=0
-					echo -en "\nThe VM ($HOST) is still in State [`echo $vm_info | awk -F '|' '{print $3}'`]. Sleeping for 5s... "
+					printf "\nThe VM ($HOST) is still in State [`echo $vm_info | awk -F '|' '{print $3}'`]. Sleeping for 5s... "
 					spin 5
 					continue
 				fi
@@ -163,7 +163,7 @@ check_vm_state()
 populate_hostsfile()
 {
 	sort /tmp/opst-hosts | uniq > /tmp/opst-hosts1
-	echo -e "\nUpdating /etc/hosts file.. Enter Your Laptop's user password if prompted"
+	printf "\nUpdating /etc/hosts file.. Enter Your Laptop's user password if prompted"
 	mod=0
 
 	## checking if local /etc/hosts file already have existing entries for nodenames being added
@@ -175,7 +175,7 @@ populate_hostsfile()
 		then
 			if [ "$mod" -ne 1 ]
 			then
-			  echo -e "\n'/etc/hosts' file on the laptop already contains entry for [ $fqdn ]. Replacing the entries and backing up existing file in /tmp/hosts"
+			  printf "\n'/etc/hosts' file on the laptop already contains entry for [ $fqdn ]. Replacing the entries and backing up existing file in /tmp/hosts\n"
 			  cp -f /etc/hosts /tmp/hosts
 			  mod=1
 			fi
@@ -205,7 +205,7 @@ source $LOC/$CLUSTER_PROPERTIES 2>/dev/null
 INSTALL_DIR=/usr/local/bin
 bootstrap_mac
 
-echo -e "\nFinding the required Image"
+printf "\nFinding the required Image\n"
 IMAGE_NAME=$(find_image)
 echo "Selected Image:" $IMAGE_NAME
 IMAGE_NAME=`echo $IMAGE_NAME| cut -d '|' -f1 | xargs`
@@ -216,10 +216,10 @@ echo "Selected Network: $NET_ID"
 echo "Selected Flavor: $FLAVOR"
 
 check_for_duplicates
-echo -e "----------------------------------\n"
+printf "\n----------------------------------\n"
 boot_clusternodes
 
 check_vm_state
 populate_hostsfile
-echo -e "\n"
+printf "\n"
 ./setup_cluster.sh $CLUSTER_PROPERTIES
