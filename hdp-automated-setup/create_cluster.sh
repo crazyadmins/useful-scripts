@@ -1,5 +1,6 @@
 #!/bin/bash
 #Author - Ratish Maruthiyodan
+#Modified by - Kuldeep Kulkarni to add bootstrap function for installing required openstack client packages.
 #Purpose - Script to Create Instance based on the parameters received from cluster.props file
 ##########################################################
 
