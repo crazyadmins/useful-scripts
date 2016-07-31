@@ -15,9 +15,9 @@ PVT_KEYFILE=~/.ssh/support-main
 
 #Add your hostnames below ( without FQDN )
 
-HOST1=hdp-lab-1-1
-HOST2=hdp-lab-1-2
-HOST3=hdp-lab-1-3
+HOST1=hdplab1
+HOST2=hdplab2
+HOST3=hdplab3
 
 #######################  EDIT BELOW INFORMATION ONLY IF YOU KNOW WHAT YOU ARE DOING!! :)  #######################
 

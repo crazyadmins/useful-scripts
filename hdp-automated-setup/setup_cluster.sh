@@ -11,8 +11,8 @@ then
 fi
 
 #Cleanup
-cp ~/.ssh/known_hosts ~/.ssh/known_hosts.bak
-echo "" > ~/.ssh/known_hosts
+#cp ~/.ssh/known_hosts ~/.ssh/known_hosts.bak
+#echo "" > ~/.ssh/known_hosts
 
 
 #Globals
@@ -41,14 +41,33 @@ prepare_hosts_file()
 	for host in `grep -w HOST[0-9]* $LOC/$CLUSTER_PROPERTIES|cut -d'=' -f2`; do grep $host /etc/hosts >> /tmp/hosts;done
 }	
 
+spin()
+{
+        count=$(($1*2))
+
+        spin[0]="-"
+        spin[1]="\\"
+        spin[2]="|"
+        spin[3]="/"
+
+        for (( j=0 ; j<$count ; j++ ))
+        do
+          for i in "${spin[@]}"
+          do
+                echo -ne "\b$i"
+                sleep 0.12
+          done
+        done
+}
+
 check_sshd_service() {
         loop=0
         echo $1
-        nc -w 2 $1 22 > /dev/null
+        nc -G 3 -w 2 $1 22
         while [ $? -eq 1 ]
         do
-                echo "SSHD is not responding on $1. Sleeping for 10 seconds..."
-                sleep 10
+                echo -ne "\nSSHD is not responding on $1. Sleeping for 10 seconds... "
+                spin 10
                 loop=$(( $loop + 1 ))
                 if [ $loop -eq 10 ]
                 then
@@ -60,51 +79,55 @@ check_sshd_service() {
                         fi
                 fi
 
-                nc -w 2 $1 22 > /dev/null
+                nc -G 3 -w 2 $1 22 > /dev/null
         done
 }
 
 bootstrap_hosts()
 {
-	
+	echo "Preparing /etc/hosts file, Setting hostname, Setting up Ambari Repo and disabling firewall on the Instances"
         for host in `echo $AMBARI_AGENTS`
         do
                 HOST=`echo $host`.$DOMAIN_NAME
 		check_sshd_service $HOST
-		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST rm -rf /etc/yum.repos.d/ambari-*.repo
-                scp -i $PVT_KEYFILE -o "StrictHostKeyChecking no" /tmp/ambari-"$AMBARIVERSION".repo root@$HOST:/etc/yum.repos.d/
-                scp -i $PVT_KEYFILE -o "StrictHostKeyChecking no" /tmp/hosts root@$HOST:/etc/hosts
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST rm -rf /etc/yum.repos.d/ambari-*.repo 2> /dev/null
+                scp -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  /tmp/ambari-"$AMBARIVERSION".repo root@$HOST:/etc/yum.repos.d/ 2> /dev/null
+                scp -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  /tmp/hosts root@$HOST:/etc/hosts 2> /dev/null
 		if [ "$OS" == "centos7" ]
 		then
 			echo $HOST
-  	                ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST hostname "$HOST"
-			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST hostnamectl set-hostname "$HOST" --static
-			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST systemctl stop firewalld.service 2>/dev/null
-			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST systemctl disable firewalld.service
+  	                ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST hostname "$HOST" 2> /dev/null
+			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST hostnamectl set-hostname "$HOST" --static 2> /dev/null
+			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST systemctl stop firewalld.service 2>/dev/null 2> /dev/null
+			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST systemctl disable firewalld.service 2> /dev/null
 		elif [ "$OS" == "centos6" ]
 		then
-  	                ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST hostname "$HOST"
-          	        ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST service iptables stop
-                	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$HOST chkconfig iptables off
+  	                ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST hostname "$HOST" 2> /dev/null
+          	        ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST service iptables stop 2> /dev/null
+                	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST chkconfig iptables off 2> /dev/null
 		fi
         done
 }
 
 setup_ambari_server()
 {
-	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_SERVER yum -y install ambari-server
-	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_SERVER ambari-server setup -s
-	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_SERVER ambari-server start
+	echo -e "\n\t Installing Ambari-Server"
+
+	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_SERVER yum -y install ambari-server
+	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_SERVER ambari-server setup -s
+	ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_SERVER ambari-server start
 }
 
 setup_ambari_agent()
 {
+	echo -e "\n\t Installing Ambari-Agents"
+
 	for host in `echo $AMBARI_AGENTS`
 	do
 		AMBARI_AGENT=`echo $host`.$DOMAIN_NAME
-		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_AGENT yum -y install ambari-agent
-		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_AGENT ambari-agent reset $AMBARI_SERVER 
-		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" root@$AMBARI_AGENT service ambari-agent start 
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_AGENT yum -y install ambari-agent
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_AGENT ambari-agent reset $AMBARI_SERVER 
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_AGENT service ambari-agent start 
 	done
 }
 
