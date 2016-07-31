@@ -11,8 +11,8 @@ then
 fi
 
 #Cleanup
-#cp ~/.ssh/known_hosts ~/.ssh/known_hosts.bak
-#echo "" > ~/.ssh/known_hosts
+cp ~/.ssh/known_hosts ~/.ssh/known_hosts.bak
+echo "" > ~/.ssh/known_hosts
 
 
 #Globals

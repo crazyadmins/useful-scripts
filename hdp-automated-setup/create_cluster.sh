@@ -3,6 +3,31 @@
 #Purpose - Script to Create Instance based on the parameters received from cluster.props file
 ##########################################################
 
+bootstrap_mac()
+{
+	echo "Checking for required openstack client packages"
+	ls -lrt $INSTALL_DIR/openstack >/dev/null 2>&1
+	openstack_stat=$?
+	ls -lrt $INSTALL_DIR/nova >/dev/null 2>&1
+	nova_stat=$?
+	ls -lrt $INSTALL_DIR/glance >/dev/null 2>&1
+	glance_stat=$?
+	ls -lrt $INSTALL_DIR/neutron >/dev/null 2>&1
+	neutron_stat=$?
+
+	if [ $openstack_stat -eq 0 ] && [ $nova_stat -eq 0 ] && [ $glance_stat -eq 0 ] && [ $neutron_stat -eq 0 ]
+	then
+		echo -e "Verified that required openstack client packages have been already installed!\nWe are good to go ahead :)"
+	else
+		echo -e "\nFound missing openstack client package(s)\nGoing ahead to install required client packages.. Enter Your Laptop's user password if prompted\n\n\nPress Enter to continue"
+		read
+		brew install python
+		sudo pip install python-openstackclient
+		sudo pip install python-novaclient
+		sudo pip install python-neutronclient
+	fi
+}
+
 find_image()
 {
 	
@@ -176,6 +201,8 @@ fi
 LOC=`pwd`
 CLUSTER_PROPERTIES=$1
 source $LOC/$CLUSTER_PROPERTIES 2>/dev/null
+INSTALL_DIR=/usr/local/bin
+bootstrap_mac
 
 echo -e "\nFinding the required Image"
 IMAGE_NAME=$(find_image)

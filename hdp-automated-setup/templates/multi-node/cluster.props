@@ -3,15 +3,15 @@
 #######################  EDIT BELOW INFORMATION  #######################
 
 CLUSTERNAME=hdptest
-OS=centos7
+OS=centos6
 AMBARIVERSION=2.2.2.0
 NUM_OF_NODES=3
 DOMAIN_NAME=openstacklocal
 DEFAULT_PASSWORD=hadoop
 CLUSTER_VERSION=2.4.2.0
 FLAVOR_NAME=m1.large
-KEYPAIR_NAME=support-main
-PVT_KEYFILE=~/.ssh/support-main
+KEYPAIR_NAME=kuldeep-ssh
+PVT_KEYFILE=~/.ssh/id_rsa
 
 #Add your hostnames below ( without FQDN )
 
