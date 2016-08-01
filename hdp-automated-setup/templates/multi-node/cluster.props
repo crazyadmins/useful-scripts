@@ -15,9 +15,9 @@ PVT_KEYFILE=~/.ssh/id_rsa
 
 #Add your hostnames below ( without FQDN )
 
-HOST1=hdplab1
-HOST2=hdplab2
-HOST3=hdplab3
+HOST1=node1
+HOST2=node2
+HOST3=node3
 
 #######################  EDIT BELOW INFORMATION ONLY IF YOU KNOW WHAT YOU ARE DOING!! :)  #######################
 

@@ -6,7 +6,7 @@
 
 bootstrap_mac()
 {
-	echo "Checking for required openstack client packages"
+	printf "\nChecking for the required openstack client packages\n"
 	ls -lrt $INSTALL_DIR/openstack >/dev/null 2>&1
 	openstack_stat=$?
 	ls -lrt $INSTALL_DIR/nova >/dev/null 2>&1
@@ -18,10 +18,15 @@ bootstrap_mac()
 
 	if [ $openstack_stat -eq 0 ] && [ $nova_stat -eq 0 ] && [ $glance_stat -eq 0 ] && [ $neutron_stat -eq 0 ]
 	then
-		echo "Verified that required openstack client packages have been already installed!\nWe are good to go ahead :)"
+		printf "Verified that required openstack client packages have been already installed!\nWe are good to go ahead :)"
 	else
 		printf "\nFound missing openstack client package(s)\nGoing ahead to install required client packages.. Enter Your Laptop's user password if prompted\n\n\nPress Enter to continue"
 		read
+		which brew | grep -q brew
+		if [ "$?" -ne 0 ]
+		then
+			ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+		fi
 		brew install python
 		sudo pip install python-openstackclient
 		sudo pip install python-novaclient
@@ -31,29 +36,31 @@ bootstrap_mac()
 
 find_image()
 {
-	
 #	CENTOS_65="CentOS 6.5 (imported from old support cloud)"
-	CENTOS_6="CentOS 6.6 (Final)"
-	CENTOS_7="CentOS 7.0.1406"
+#	CENTOS_6="CentOS 6.6 (Final)"
+#	CENTOS_7="CentOS 7.0.1406"
 #	UBUNTU_1204="Ubuntu 12.04"
 #	UBUNTU_1404="Ubuntu 14.04"
 #	SLES11SP3="SLES 11 SP3"
-
+	dt=$(date "+%Y-%m-%d-%H.%M")
+	curl http://$REPO_SERVER/os_images.txt > /tmp/os_images_$dt.txt 2> /dev/null
+	source /tmp/os_images_$dt.txt
 		
 	req_os_distro=$(echo $OS | awk -F"[0-9]" '{print $1}'| xargs| tr '[:lower:]' '[:upper:]')
 	req_os_ver=$(echo $OS | awk -F"[a-z]" '{$1="";print $0}'|awk -F '.' '{print $1$2}'| xargs| tr '[:lower:]' '[:upper:]')
 	req_os_distro=$req_os_distro\_$req_os_ver
 	eval req_os_distro=\$$req_os_distro
-	if [ -z req_os_distro ]
+	if [ -z "$req_os_distro" ]
 	then
-		printf "\nThe mentioned OS image is unavailable. The available images are:"
-		glance image-list
+		printf "\nThe mentioned OS image is unavailable. The available images are:\n"
+		cat /tmp/os_images_$dt.txt
+		rm -f /tmp/os_images_$dt.txt
 		exit 1
 	fi
 
+	rm -f /tmp/os_images_$dt.txt
 	image_id=`glance image-list | grep "$req_os_distro" | cut -d "|" -f2,3 | xargs`
 	echo $image_id
-
 }
 
 find_netid()
@@ -96,7 +103,7 @@ check_for_duplicates()
 		echo $existing_nodes | grep -q -w $OS_USERNAME-$HOST
 		if [ $? -eq 0 ]
 		then
-			printf "\n\nAn Instance with the name \"$HOST\" already exists. Please choose unique Hosnames"
+			printf "\n\nAn Instance with the name \"$OS_USERNAME-$HOST\" already exists. Please choose unique HostNames\n\n"
 			exit 1
 		fi
 	done
@@ -125,7 +132,7 @@ spin()
 
 check_vm_state()
 {
-	echo "Waiting for all the VMs to be started"
+	printf "\nWaiting for all the VMs to be started\n"
 	STARTUP_STATE=0
 	cat /dev/null > /tmp/opst-hosts
 	STARTED_VMS=""
@@ -142,7 +149,7 @@ check_vm_state()
 				if [ "$?" -ne 0 ]
 				then
 					STARTUP_STATE=0
-					printf "\nThe VM ($HOST) is still in State [`echo $vm_info | awk -F '|' '{print $3}'`]. Sleeping for 5s... "
+					printf "\nThe VM ($HOST) is still in the State [`echo $vm_info | awk -F '|' '{print $3}'`]. Waiting for 5s... "
 					spin 5
 					continue
 				fi
@@ -154,7 +161,7 @@ check_vm_state()
 			echo $IP  $HOST.$DOMAIN_NAME $HOST >> /tmp/opst-hosts
 			STARTUP_STATE=1
 			STARTED_VMS=$STARTED_VMS:$HOST
-			echo "$HOST Ok"
+			printf "\n$HOST Ok"
 		done
 		STARTUP_STATE=0
 	done
@@ -163,7 +170,7 @@ check_vm_state()
 populate_hostsfile()
 {
 	sort /tmp/opst-hosts | uniq > /tmp/opst-hosts1
-	printf "\nUpdating /etc/hosts file.. Enter Your Laptop's user password if prompted"
+	printf "\n\nUpdating /etc/hosts file.. \nEnter Your Laptop's user password if prompted\n"
 	mod=0
 
 	## checking if local /etc/hosts file already have existing entries for nodenames being added
@@ -175,7 +182,7 @@ populate_hostsfile()
 		then
 			if [ "$mod" -ne 1 ]
 			then
-			  printf "\n'/etc/hosts' file on the laptop already contains entry for [ $fqdn ]. Replacing the entries and backing up existing file in /tmp/hosts\n"
+			  printf "\n/etc/hosts file on the laptop already contains entry for '$fqdn'. Replacing the entries and backing up existing file in /tmp/hosts\n\n"
 			  cp -f /etc/hosts /tmp/hosts
 			  mod=1
 			fi
@@ -184,9 +191,8 @@ populate_hostsfile()
 			sudo sh -c "echo $entry >> /etc/hosts"
 		fi
 	done < /tmp/opst-hosts1
-	echo "Instances are created with the Following IPs:"	
+	printf "\nInstances are created with the Following IPs:\n"	
 	cat /tmp/opst-hosts1
-#	sudo sh -c "cat /tmp/opst-hosts1 >> /etc/hosts"
 }
 
 ## Start of Main
@@ -205,8 +211,13 @@ source $LOC/$CLUSTER_PROPERTIES 2>/dev/null
 INSTALL_DIR=/usr/local/bin
 bootstrap_mac
 
-printf "\nFinding the required Image\n"
+printf "\n\nFinding the required Image\n"
 IMAGE_NAME=$(find_image)
+if [ "$?" -ne 0 ]
+then
+	printf "$IMAGE_NAME\n\n"
+	exit 1
+fi
 echo "Selected Image:" $IMAGE_NAME
 IMAGE_NAME=`echo $IMAGE_NAME| cut -d '|' -f1 | xargs`
 
@@ -216,7 +227,7 @@ echo "Selected Network: $NET_ID"
 echo "Selected Flavor: $FLAVOR"
 
 check_for_duplicates
-printf "\n----------------------------------\n"
+printf "\n--------------------------------------\n"
 boot_clusternodes
 
 check_vm_state

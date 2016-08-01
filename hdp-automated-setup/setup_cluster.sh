@@ -81,6 +81,7 @@ check_sshd_service() {
 
                 nc -G 3 -w 2 $1 22 > /dev/null
         done
+	printf "\n"
 }
 
 bootstrap_hosts()
