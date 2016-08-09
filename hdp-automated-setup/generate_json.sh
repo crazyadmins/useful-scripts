@@ -116,7 +116,7 @@ echo "{
 }
 }" > $LOC/repo.json
 
-BASE_URL_UTILS="http://$REPO_SERVER/hdp/$OS/HDP-UTILS-1.1.0.20/"
+BASE_URL_UTILS="http://$REPO_SERVER/hdp/$OS/HDP-UTILS-$UTILS_VERSION/"
 
 export BASE_URL_UTILS;
 
