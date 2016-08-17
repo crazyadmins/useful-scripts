@@ -17,7 +17,7 @@ export OS_USER_DOMAIN_NAME=HORTON
 export OS_PROJECT_DOMAIN_NAME=HORTON
 
 echo
-read -s -p "Please enter the Password for '$OS_USERNAME': " OS_PASSWORD_INPUT
+read -s -p "Please enter the OKTA Password for '$OS_USERNAME': " OS_PASSWORD_INPUT
 #read -sr OS_PASSWORD_INPUT
 export OS_PASSWORD=$OS_PASSWORD_INPUT
 
