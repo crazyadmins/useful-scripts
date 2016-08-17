@@ -239,4 +239,4 @@ boot_clusternodes
 check_vm_state
 populate_hostsfile
 printf "\n"
-./setup_cluster.sh $CLUSTER_PROPERTIES
+sh $LOC/setup_cluster.sh $CLUSTER_PROPERTIES
