@@ -4,6 +4,11 @@
 #Purpose - Script to Create Instance based on the parameters received from cluster.props file
 ##########################################################
 
+source_env()
+{
+	source $LOC/openstack_cli_support.sh 
+}
+
 bootstrap_mac()
 {
 	printf "\nChecking for the required openstack client packages\n"
@@ -209,6 +214,7 @@ LOC=`pwd`
 CLUSTER_PROPERTIES=$1
 source $LOC/$CLUSTER_PROPERTIES 2>/dev/null
 INSTALL_DIR=/usr/local/bin
+source_env
 bootstrap_mac
 
 printf "\n\nFinding the required Image\n"
