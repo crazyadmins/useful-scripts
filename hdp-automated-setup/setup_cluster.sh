@@ -54,7 +54,7 @@ spin()
         do
           for i in "${spin[@]}"
           do
-                echo -ne "\b$i"
+                printf "\b$i"
                 sleep 0.12
           done
         done

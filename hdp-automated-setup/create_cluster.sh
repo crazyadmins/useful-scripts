@@ -6,7 +6,8 @@
 
 source_env()
 {
-	source $LOC/openstack_cli_support.sh 
+	env_file=`ls -lrt $LOC/openstack_cli_support*|tail -1|awk '{print $9}'`
+	source $LOC/$env_file 
 }
 
 bootstrap_mac()
