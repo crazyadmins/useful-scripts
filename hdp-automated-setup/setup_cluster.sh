@@ -66,7 +66,7 @@ check_sshd_service() {
         nc -G 3 -w 2 $1 22
         while [ $? -eq 1 ]
         do
-                echo -ne "\nSSHD is not responding on $1. Sleeping for 10 seconds... "
+                printf "\nSSHD is not responding on $1. Sleeping for 10 seconds... "
                 spin 10
                 loop=$(( $loop + 1 ))
                 if [ $loop -eq 10 ]
