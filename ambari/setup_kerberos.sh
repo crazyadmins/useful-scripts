@@ -20,8 +20,9 @@ setup_kdc()
 	echo -e "\n`ts` Installing kerberos RPMs"
 	yum -y install krb5-server krb5-libs krb5-workstation
 	echo -e "\n`ts` Configuring Kerberos"
-	sed -i.bak "s/EXAMPLE.COM/$REALM/g" /etc/krb5.conf
-	sed -i.bak "s/kerberos.example.com/$KDC_HOST/g" /etc/krb5.conf
+	sed -i.bak "s/EXAMPLE.COM/$REALM/g" $LOC/krb5.conf.default
+	sed -i.bak "s/kerberos.example.com/$KDC_HOST/g" $LOC/krb5.conf.default
+	cat $LOC/krb5.conf.default > /etc/krb5.conf
 	kdb5_util create -s -P hadoop
 	echo -e "\n`ts` Starting KDC services"
 	service krb5kdc start
