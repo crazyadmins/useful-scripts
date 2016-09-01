@@ -33,7 +33,7 @@ setup_kdc()
 	kadmin.local -q "addprinc -pw hadoop admin/admin"
 	sed -i.bak "s/EXAMPLE.COM/$REALM/g" /var/kerberos/krb5kdc/kadm5.acl
 	echo -e "\n`ts` Restarting kadmin"
-	/etc/rc.d/init.d/kadmin restart
+	service kadmin restart
 }
 
 create_payload()
