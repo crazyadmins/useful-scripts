@@ -100,7 +100,7 @@ backup_db()
 
 restart_stale_configs()
 {
-	echo "curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD http://$AMBARI_HOST:8080/api/v1/clusters/Sandbox/host_components?HostRoles/stale_configs=true&fields=HostRoles/service_name,HostRoles/host_name&minimal_response=false"> /tmp/curl_ambari.sh
+	echo "curl -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/host_components?HostRoles/stale_configs=true&fields=HostRoles/service_name,HostRoles/host_name&minimal_response=false"> /tmp/curl_ambari.sh
 	sh /tmp/curl_ambari.sh 1 > /tmp/stale_services_json 2>/dev/null
 	sleep 1
 	grep host_components /tmp/stale_services_json|grep -v stale|rev|cut -d'"' -f2|rev > /tmp/list_of_components
