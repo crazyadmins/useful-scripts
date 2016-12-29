@@ -44,31 +44,41 @@ bootstrap_mac()
 
 find_image()
 {
-#	CENTOS_65="CentOS 6.5 (imported from old support cloud)"
-#	CENTOS_6="CentOS 6.6 (Final)"
-#	CENTOS_7="CentOS 7.0.1406"
-#	UBUNTU_1204="Ubuntu 12.04"
-#	UBUNTU_1404="Ubuntu 14.04"
-#	SLES11SP3="SLES 11 SP3"
-	dt=$(date "+%Y-%m-%d-%H.%M")
-	curl http://$REPO_SERVER/os_images.txt > /tmp/os_images_$dt.txt 2> /dev/null
-	source /tmp/os_images_$dt.txt
-		
-	req_os_distro=$(echo $OS | awk -F"[0-9]" '{print $1}'| xargs| tr '[:lower:]' '[:upper:]')
-	req_os_ver=$(echo $OS | awk -F"[a-z]" '{$1="";print $0}'|awk -F '.' '{print $1$2}'| xargs| tr '[:lower:]' '[:upper:]')
-	req_os_distro=$req_os_distro\_$req_os_ver
-	eval req_os_distro=\$$req_os_distro
-	if [ -z "$req_os_distro" ]
-	then
-		printf "\nThe mentioned OS image is unavailable. The available images are:\n"
-		cat /tmp/os_images_$dt.txt
-		rm -f /tmp/os_images_$dt.txt
-		exit 1
-	fi
+#       CENTOS_65="CentOS 6.5 (imported from old support cloud)"
+#       CENTOS_6="CentOS 6.6 (Final)"
+#       CENTOS_7="CentOS 7.0.1406"
+#       UBUNTU_1204="Ubuntu 12.04"
+#       UBUNTU_1404="Ubuntu 14.04"
+#       SLES11SP3="SLES 11 SP3"
 
-	rm -f /tmp/os_images_$dt.txt
-	image_id=`glance image-list | grep "$req_os_distro" | cut -d "|" -f2,3 | xargs`
-	echo $image_id
+        glance image-list > /tmp/image_list
+        grep "$OS"-hdp-"$CLUSTER_VERSION" /tmp/image_list
+        if [ $? -eq 0 ]
+        then
+                #printf "\nFound snapshot of $OS for HDP-"$CLUSTER_VERSION". Will go ahead and use that one to save your time! :)\nYou are welcome ;)"
+                image_id=`cat /tmp/image_list | grep "$OS"-hdp-"$CLUSTER_VERSION" | cut -d "|" -f3 | xargs`
+        else
+                #echo -e "\nCould not Find snapshot of $OS for HDP-"$CLUSTER_VERSION". Will go ahead and use standard template to setup HDP-"$CLUSTER_VERSION" for you!"
+                dt=$(date "+%Y-%m-%d-%H.%M")
+                curl http://$REPO_SERVER/os_images.txt > /tmp/os_images_$dt.txt 2> /dev/null
+                source /tmp/os_images_$dt.txt
+
+                req_os_distro=$(echo $OS | awk -F"[0-9]" '{print $1}'| xargs| tr '[:lower:]' '[:upper:]')
+                req_os_ver=$(echo $OS | awk -F"[a-z]" '{$1="";print $0}'|awk -F '.' '{print $1$2}'| xargs| tr '[:lower:]' '[:upper:]')
+                req_os_distro=$req_os_distro\_$req_os_ver
+                eval req_os_distro=\$$req_os_distro
+                if [ -z "$req_os_distro" ]
+                then
+                        printf "\nThe mentioned OS image is unavailable. The available images are:\n"
+                        cat /tmp/os_images_$dt.txt
+                        rm -f /tmp/os_images_$dt.txt
+                        exit 1
+                fi
+
+                rm -f /tmp/os_images_$dt.txt
+                image_id=`cat /tmp/image_list | grep "$req_os_distro" | cut -d "|" -f2,3 | xargs|cut -d'|' -f1|xargs`
+        fi
+        echo $image_id
 }
 
 find_netid()
@@ -228,7 +238,7 @@ then
 	exit 1
 fi
 echo "Selected Image:" $IMAGE_NAME
-IMAGE_NAME=`echo $IMAGE_NAME| cut -d '|' -f1 | xargs`
+IMAGE_NAME=`echo $IMAGE_NAME| cut -d '|' -f2 | xargs`
 
 FLAVOR=`find_flavor`
 NET_ID=$(find_netid)
