@@ -3,11 +3,13 @@
 #Modified by - Kuldeep Kulkarni to add bootstrap function for installing required openstack client packages.
 #Purpose - Script to Create Instance based on the parameters received from cluster.props file
 ##########################################################
+echo `date +%s` > /tmp/start_time
 
 source_env()
 {
 	env_file=`ls -lrt $LOC/openstack_cli_support*|tail -1|awk '{print $9}'`
-	source $env_file 
+	source $env_file
+	echo "$OS_USERNAME" > /tmp/user 
 }
 
 bootstrap_mac()

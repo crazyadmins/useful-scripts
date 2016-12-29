@@ -3,7 +3,6 @@
 #Contributor - Ratish Maruthiyodan
 #Script will setup and configure ambari-server/ambari-agents and hdp cluster
 ##########################################################
-
 if [ $# -ne 1 ]
 then
         printf "Usage $0 /path-to/cluster.props\nExample: $0 templates/multi-node/cluster.props"
@@ -22,7 +21,7 @@ source $LOC/$CLUSTER_PROPERTIES 2>/dev/null
 AMBARI_SERVER=`grep -w HOST[0-9]* $LOC/$CLUSTER_PROPERTIES|head -1|cut -d'=' -f2`.$DOMAIN_NAME
 AMBARI_AGENTS=`grep -w HOST[0-9]* $LOC/$CLUSTER_PROPERTIES|cut -d'=' -f2` 2>/dev/null
 AMBARI_SERVER_IP=`grep -w $AMBARI_SERVER /etc/hosts|awk '{print $1}'`
-
+USERNAME=`cat /tmp/user`
 
 generate_ambari_repo()
 {
@@ -94,11 +93,13 @@ bootstrap_hosts()
 		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST rm -rf /etc/yum.repos.d/ambari-*.repo 2> /dev/null
                 scp -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  /tmp/ambari-"$AMBARIVERSION".repo root@$HOST:/etc/yum.repos.d/ 2> /dev/null
                 scp -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  /tmp/hosts root@$HOST:/etc/hosts 2> /dev/null
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST sed -i.bak "s/$USERNAME-$HOST/$HOST/g /etc/sysconfig/network"
 		if [ "$OS" == "centos7" ]
 		then
 			echo $HOST
   	                ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST hostname "$HOST" 2> /dev/null
-			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST hostnamectl set-hostname "$HOST" --static 2> /dev/null
+			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST hostnamectl set-hostname "$HOST" && hostnamectl set-hostname "$HOST" --static 2> /dev/null
+			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST systemctl restart systemd-hostnamed
 			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST systemctl stop firewalld.service 2>/dev/null 2> /dev/null
 			ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$HOST systemctl disable firewalld.service 2> /dev/null
 		elif [ "$OS" == "centos6" ]
@@ -127,8 +128,8 @@ setup_ambari_agent()
 	do
 		AMBARI_AGENT=`echo $host`.$DOMAIN_NAME
 		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_AGENT yum -y install ambari-agent
-		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_AGENT ambari-agent reset $AMBARI_SERVER 
-		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_AGENT service ambari-agent start 
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_AGENT ambari-agent reset $AMBARI_SERVER           
+		ssh -i $PVT_KEYFILE -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null"  root@$AMBARI_AGENT service ambari-agent start
 	done
 }
 
@@ -136,7 +137,13 @@ setup_hdp()
 {
 	$LOC/generate_json.sh $CLUSTER_PROPERTIES $AMBARI_SERVER_IP
 	printf "\n$(tput setaf 2)Please hit http://$AMBARI_SERVER_IP:8080 in your browser and check installation status!\n\nIt would not take more than 5 minutes :)\n\nHappy Hadooping!\n$(tput sgr 0)"
-	mv ~/.ssh/known_hosts.bak ~/.ssh/known_hosts 
+	mv ~/.ssh/known_hosts.bak ~/.ssh/known_hosts
+	end_time=`date +%s`
+	start_time=`cat /tmp/start_time`
+	runtime=`echo "($end_time-$start_time)/60"|bc -l`
+	printf "\n\n$(tput setaf 2)Script runtime(Including time taken for manual intervention) - $runtime minutes!\n$(tput sgr 0)"
+	TS=`date +%Y-%m-%d,%H:%M:%S`
+	echo "$TS|`whoami`|`hostname -f`|$runtime" > /tmp/usage_track_"$USER"_"$TS"
 }
 
 
@@ -149,3 +156,7 @@ setup_ambari_server
 setup_ambari_agent
 sleep 5
 setup_hdp
+#upload usage tracker file to sftp
+sftp -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null" root@172.26.64.249 <<EOF
+put /tmp/usage_track_"$USER"_"$TS" /root/
+EOF
