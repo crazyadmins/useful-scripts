@@ -20,7 +20,7 @@ GRANT ALL PRIVILEGES ON DATABASE ambari TO ambari;
 \connect ambari;
 CREATE SCHEMA ambari AUTHORIZATION ambari;
 ALTER SCHEMA ambari OWNER TO ambari;
-ALTER ROLE ambari SET search_path to 'ambari', 'public';" > /tmp/deb_commands
+ALTER ROLE ambari SET search_path to 'ambari', 'public';" > /tmp/db_commands
 
 echo -e "\nTaking backup of existing Ambari DB just to be on safer side!"
 pg_dump -W -U ambari ambari > "$LOC"/ambari-db-backup-"$TS".sql
