@@ -162,7 +162,3 @@ setup_ambari_server
 setup_ambari_agent
 sleep 5
 setup_hdp
-#upload usage tracker file to sftp
-sftp -o "StrictHostKeyChecking no" -o "CheckHostIP=no" -o "UserKnownHostsFile=/dev/null" root@172.26.64.249 <<EOF
-put /tmp/usage_track_"$USER"_"$TS" /root/
-EOF
