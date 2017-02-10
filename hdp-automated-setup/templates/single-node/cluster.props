@@ -2,21 +2,21 @@
 
 #######################  EDIT BELOW INFORMATION  #######################
 
-CLUSTERNAME=hdptest
+CLUSTERNAME=ooziesqoop
 OS=centos6
-AMBARIVERSION=2.1.2.1
-UTILS_VERSION=1.1.0.20
+AMBARIVERSION=2.4.2.0
+UTILS_VERSION=1.1.0.21
 NUM_OF_NODES=1
 DOMAIN_NAME=openstacklocal
 DEFAULT_PASSWORD=hadoop
-CLUSTER_VERSION=2.3.2.0
-FLAVOR_NAME=m1.medium
+CLUSTER_VERSION=2.4.2.0
+FLAVOR_NAME=m1.large
 KEYPAIR_NAME=kuldeep-ssh
 PVT_KEYFILE=~/.ssh/id_rsa
 
 #Add your hostnames below ( without FQDN )
 
-HOST1=node1
+HOST1=ooziesqoop
 
 #######################  EDIT BELOW INFORMATION ONLY IF YOU KNOW WHAT YOU ARE DOING!! :)  #######################
 

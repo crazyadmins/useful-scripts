@@ -4,6 +4,7 @@
 #Purpose - Script to Create Instance based on the parameters received from cluster.props file
 ##########################################################
 echo `date +%s` > /tmp/start_time
+source $1 2>/dev/null
 
 source_env()
 {
@@ -83,7 +84,7 @@ find_image()
 
 find_netid()
 {
-	echo $(neutron net-list | head -n 4 | tail -n1| cut -d"|" -f2 | xargs) 
+	echo $(neutron net-list | grep PROVIDER_NET| cut -d"|" -f2 | xargs) 
 }
 
 find_flavor()
@@ -206,6 +207,7 @@ populate_hostsfile()
 			fi
 			sudo sed -i.bak "s/[0-9]*.*$fqdn.*/$entry/" /etc/hosts
 		else
+			sudo sh -c "echo \#Ambari-"$AMBARIVERSION",HDP-"$CLUSTER_VERSION" >> /etc/hosts"
 			sudo sh -c "echo $entry >> /etc/hosts"
 		fi
 	done < /tmp/opst-hosts1
