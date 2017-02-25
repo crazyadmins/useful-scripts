@@ -1,10 +1,20 @@
 #!/bin/bash
 #Author - Ratish Maruthiyodan
-#Modified by - Kuldeep Kulkarni to add bootstrap function for installing required openstack client packages.
+#Modified by - Kuldeep Kulkarni to add:
+#1. bootstrap function for installing required openstack client packages.
+#2. Fixed hostname issue
+#3. Time tracking
+#4. Fixed network selection pattern
 #Purpose - Script to Create Instance based on the parameters received from cluster.props file
 ##########################################################
 echo `date +%s` > /tmp/start_time
 source $1 2>/dev/null
+
+git_pull()
+{
+	printf "\n\n$(tput setaf 2)Checking if code is up-to-date else will pull latest code now\nSmart option for lazy people ;)\n$(tput sgr 0)"
+	git pull
+}
 
 source_env()
 {
@@ -229,6 +239,7 @@ LOC=`pwd`
 CLUSTER_PROPERTIES=$1
 source $LOC/$CLUSTER_PROPERTIES 2>/dev/null
 INSTALL_DIR=/usr/local/bin
+git_pull
 source_env
 bootstrap_mac
 

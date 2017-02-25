@@ -142,7 +142,7 @@ setup_ambari_agent()
 setup_hdp()
 {
 	$LOC/generate_json.sh $CLUSTER_PROPERTIES $AMBARI_SERVER_IP
-	printf "\n$(tput setaf 2)Please hit http://$AMBARI_SERVER_IP:8080 in your browser and check installation status!\n\nIt would not take more than 5 minutes :)\n\nHappy Hadooping!\n$(tput sgr 0)"
+	printf "\n$(tput setaf 2)Please hit http://$AMBARI_SERVER_IP:8080 in your browser and check installation status!\n\nIt would not take much time :)\n\nHappy Hadooping!\n$(tput sgr 0)"
 	mv ~/.ssh/known_hosts.bak ~/.ssh/known_hosts
 	end_time=`date +%s`
 	start_time=`cat /tmp/start_time`
