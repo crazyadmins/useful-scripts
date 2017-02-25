@@ -10,7 +10,7 @@ export OS_NO_CACHE=1
 export OS_IDENTITY_API_VERSION=3
 export OS_AUTH_VERSION=3
 
-export OS_USERNAME="kkulkarni"
+export OS_USERNAME="<your-okta-user>"
 export OS_TENANT_NAME="support-lab"
 export OS_PROJECT_NAME="support-lab"
 export OS_USER_DOMAIN_NAME=HORTON
