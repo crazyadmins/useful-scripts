@@ -63,6 +63,11 @@ find_image()
 #       SLES11SP3="SLES 11 SP3"
 
         glance image-list > /tmp/image_list
+	if [ $? -ne 0 ]
+	then
+		echo -e "\nLooks like you have entered wrong password. Please run the script again & enter correct password."
+		exit 1
+	fi
         grep "$OS"-hdp-"$CLUSTER_VERSION" /tmp/image_list
         if [ $? -eq 0 ]
         then
@@ -187,7 +192,7 @@ check_vm_state()
 				break
 			fi
 			IP=`echo $vm_info | awk -F'|' '{print $6}' | xargs`
-			echo $IP  $HOST.$DOMAIN_NAME $HOST >> /tmp/opst-hosts
+			echo $IP  $HOST.$DOMAIN_NAME $HOST $OS_USERNAME-$HOST.$DOMAIN_NAME >> /tmp/opst-hosts
 			STARTUP_STATE=1
 			STARTED_VMS=$STARTED_VMS:$HOST
 			printf "\n$HOST Ok"
