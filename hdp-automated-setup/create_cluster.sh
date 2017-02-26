@@ -1,9 +1,20 @@
 #!/bin/bash
 #Author - Ratish Maruthiyodan
-#Modified by - Kuldeep Kulkarni to add bootstrap function for installing required openstack client packages.
+#Modified by - Kuldeep Kulkarni to add:
+#1. bootstrap function for installing required openstack client packages.
+#2. Fixed hostname issue
+#3. Time tracking
+#4. Fixed network selection pattern
 #Purpose - Script to Create Instance based on the parameters received from cluster.props file
 ##########################################################
 echo `date +%s` > /tmp/start_time
+source $1 2>/dev/null
+
+git_pull()
+{
+	printf "\n\n$(tput setaf 2)Checking if code is up-to-date else will pull latest code now\nSmart option for lazy people ;)\n$(tput sgr 0)"
+	git pull
+}
 
 source_env()
 {
@@ -44,36 +55,51 @@ bootstrap_mac()
 
 find_image()
 {
-#	CENTOS_65="CentOS 6.5 (imported from old support cloud)"
-#	CENTOS_6="CentOS 6.6 (Final)"
-#	CENTOS_7="CentOS 7.0.1406"
-#	UBUNTU_1204="Ubuntu 12.04"
-#	UBUNTU_1404="Ubuntu 14.04"
-#	SLES11SP3="SLES 11 SP3"
-	dt=$(date "+%Y-%m-%d-%H.%M")
-	curl http://$REPO_SERVER/os_images.txt > /tmp/os_images_$dt.txt 2> /dev/null
-	source /tmp/os_images_$dt.txt
-		
-	req_os_distro=$(echo $OS | awk -F"[0-9]" '{print $1}'| xargs| tr '[:lower:]' '[:upper:]')
-	req_os_ver=$(echo $OS | awk -F"[a-z]" '{$1="";print $0}'|awk -F '.' '{print $1$2}'| xargs| tr '[:lower:]' '[:upper:]')
-	req_os_distro=$req_os_distro\_$req_os_ver
-	eval req_os_distro=\$$req_os_distro
-	if [ -z "$req_os_distro" ]
+#       CENTOS_65="CentOS 6.5 (imported from old support cloud)"
+#       CENTOS_6="CentOS 6.6 (Final)"
+#       CENTOS_7="CentOS 7.0.1406"
+#       UBUNTU_1204="Ubuntu 12.04"
+#       UBUNTU_1404="Ubuntu 14.04"
+#       SLES11SP3="SLES 11 SP3"
+
+        glance image-list > /tmp/image_list
+	if [ $? -ne 0 ]
 	then
-		printf "\nThe mentioned OS image is unavailable. The available images are:\n"
-		cat /tmp/os_images_$dt.txt
-		rm -f /tmp/os_images_$dt.txt
+		echo -e "\nLooks like you have entered wrong password. Please run the script again & enter correct password."
 		exit 1
 	fi
+        grep "$OS"-hdp-"$CLUSTER_VERSION" /tmp/image_list
+        if [ $? -eq 0 ]
+        then
+                #printf "\nFound snapshot of $OS for HDP-"$CLUSTER_VERSION". Will go ahead and use that one to save your time! :)\nYou are welcome ;)"
+                image_id=`cat /tmp/image_list | grep "$OS"-hdp-"$CLUSTER_VERSION" | cut -d "|" -f3 | xargs`
+        else
+                #echo -e "\nCould not Find snapshot of $OS for HDP-"$CLUSTER_VERSION". Will go ahead and use standard template to setup HDP-"$CLUSTER_VERSION" for you!"
+                dt=$(date "+%Y-%m-%d-%H.%M")
+                curl http://$REPO_SERVER/os_images.txt > /tmp/os_images_$dt.txt 2> /dev/null
+                source /tmp/os_images_$dt.txt
 
-	rm -f /tmp/os_images_$dt.txt
-	image_id=`glance image-list | grep "$req_os_distro" | cut -d "|" -f2,3 | xargs`
-	echo $image_id
+                req_os_distro=$(echo $OS | awk -F"[0-9]" '{print $1}'| xargs| tr '[:lower:]' '[:upper:]')
+                req_os_ver=$(echo $OS | awk -F"[a-z]" '{$1="";print $0}'|awk -F '.' '{print $1$2}'| xargs| tr '[:lower:]' '[:upper:]')
+                req_os_distro=$req_os_distro\_$req_os_ver
+                eval req_os_distro=\$$req_os_distro
+                if [ -z "$req_os_distro" ]
+                then
+                        printf "\nThe mentioned OS image is unavailable. The available images are:\n"
+                        cat /tmp/os_images_$dt.txt
+                        rm -f /tmp/os_images_$dt.txt
+                        exit 1
+                fi
+
+                rm -f /tmp/os_images_$dt.txt
+                image_id=`cat /tmp/image_list | grep "$req_os_distro" | cut -d "|" -f2,3 | xargs|cut -d'|' -f1|xargs`
+        fi
+        echo $image_id
 }
 
 find_netid()
 {
-	echo $(neutron net-list | head -n 4 | tail -n1| cut -d"|" -f2 | xargs) 
+	echo $(neutron net-list | grep PROVIDER_NET| cut -d"|" -f2 | xargs) 
 }
 
 find_flavor()
@@ -166,7 +192,7 @@ check_vm_state()
 				break
 			fi
 			IP=`echo $vm_info | awk -F'|' '{print $6}' | xargs`
-			echo $IP  $HOST.$DOMAIN_NAME $HOST >> /tmp/opst-hosts
+			echo $IP  $HOST.$DOMAIN_NAME $HOST $OS_USERNAME-$HOST.$DOMAIN_NAME >> /tmp/opst-hosts
 			STARTUP_STATE=1
 			STARTED_VMS=$STARTED_VMS:$HOST
 			printf "\n$HOST Ok"
@@ -196,6 +222,7 @@ populate_hostsfile()
 			fi
 			sudo sed -i.bak "s/[0-9]*.*$fqdn.*/$entry/" /etc/hosts
 		else
+			sudo sh -c "echo \#Ambari-"$AMBARIVERSION",HDP-"$CLUSTER_VERSION" >> /etc/hosts"
 			sudo sh -c "echo $entry >> /etc/hosts"
 		fi
 	done < /tmp/opst-hosts1
@@ -217,6 +244,7 @@ LOC=`pwd`
 CLUSTER_PROPERTIES=$1
 source $LOC/$CLUSTER_PROPERTIES 2>/dev/null
 INSTALL_DIR=/usr/local/bin
+git_pull
 source_env
 bootstrap_mac
 
@@ -228,7 +256,7 @@ then
 	exit 1
 fi
 echo "Selected Image:" $IMAGE_NAME
-IMAGE_NAME=`echo $IMAGE_NAME| cut -d '|' -f1 | xargs`
+IMAGE_NAME=`echo $IMAGE_NAME| cut -d '|' -f2 | xargs`
 
 FLAVOR=`find_flavor`
 NET_ID=$(find_netid)

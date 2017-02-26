@@ -3,7 +3,7 @@
 #######################  EDIT BELOW INFORMATION  #######################
 
 CLUSTERNAME=hdptest
-OS=centos6
+OS=centos7
 AMBARIVERSION=2.2.2.0
 NUM_OF_NODES=3
 DOMAIN_NAME=openstacklocal
