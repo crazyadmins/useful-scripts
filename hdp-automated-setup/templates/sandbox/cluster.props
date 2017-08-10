@@ -1,0 +1,18 @@
+#Note - Please visit http://172.26.64.249/versions.htm for available Ambari & HDP versions information.
+
+#######################  EDIT BELOW INFORMATION  #######################
+
+DOMAIN_NAME=openstacklocal
+FLAVOR_NAME=m1.xlarge
+KEYPAIR_NAME=kuldeep-ssh
+PVT_KEYFILE=~/.ssh/id_rsa
+SANDBOX_VERSION=hdf-sandbox-3.0
+
+#Add your hostnames below ( without FQDN )
+
+HOST1=hdf-sandbox-3.0
+
+#######################  EDIT BELOW INFORMATION ONLY IF YOU KNOW WHAT YOU ARE DOING!! :)  #######################
+
+REPO_SERVER=172.26.64.249
+HOST1_SERVICES="NAMENODE,NODEMANAGER,DATANODE,ZOOKEEPER_CLIENT,HDFS_CLIENT,YARN_CLIENT,MAPREDUCE2_CLIENT,ZOOKEEPER_SERVER,SECONDARY_NAMENODE,RESOURCEMANAGER,APP_TIMELINE_SERVER,HISTORYSERVER"

@@ -68,33 +68,40 @@ find_image()
 		echo -e "\nLooks like you have entered wrong password. Please run the script again & enter correct password."
 		exit 1
 	fi
-        grep "$OS"-hdp-"$CLUSTER_VERSION" /tmp/image_list
-        if [ $? -eq 0 ]
-        then
-                #printf "\nFound snapshot of $OS for HDP-"$CLUSTER_VERSION". Will go ahead and use that one to save your time! :)\nYou are welcome ;)"
-                image_id=`cat /tmp/image_list | grep "$OS"-hdp-"$CLUSTER_VERSION" | cut -d "|" -f3 | xargs`
-        else
-                #echo -e "\nCould not Find snapshot of $OS for HDP-"$CLUSTER_VERSION". Will go ahead and use standard template to setup HDP-"$CLUSTER_VERSION" for you!"
-                dt=$(date "+%Y-%m-%d-%H.%M")
-                curl http://$REPO_SERVER/os_images.txt > /tmp/os_images_$dt.txt 2> /dev/null
-                source /tmp/os_images_$dt.txt
 
-                req_os_distro=$(echo $OS | awk -F"[0-9]" '{print $1}'| xargs| tr '[:lower:]' '[:upper:]')
-                req_os_ver=$(echo $OS | awk -F"[a-z]" '{$1="";print $0}'|awk -F '.' '{print $1$2}'| xargs| tr '[:lower:]' '[:upper:]')
-                req_os_distro=$req_os_distro\_$req_os_ver
-                eval req_os_distro=\$$req_os_distro
-                if [ -z "$req_os_distro" ]
-                then
-                        printf "\nThe mentioned OS image is unavailable. The available images are:\n"
-                        cat /tmp/os_images_$dt.txt
-                        rm -f /tmp/os_images_$dt.txt
-                        exit 1
-                fi
+	#If sandbox template is provided then go for sandbox image
+	if [ "$SANDBOX_VERSION" != "" ]
+	then
+		image_id=`grep "$SANDBOX_VERSION" /tmp/image_list | cut -d "|" -f2,3 | xargs|cut -d'|' -f1|xargs`
+	else 
+		#If single/multi node template is provided then pick snapshot image if available or else go with standard OS image
 
-                rm -f /tmp/os_images_$dt.txt
-                image_id=`cat /tmp/image_list | grep "$req_os_distro" | cut -d "|" -f2,3 | xargs|cut -d'|' -f1|xargs`
-        fi
-        echo $image_id
+	        grep "$OS"-hdp-"$CLUSTER_VERSION" /tmp/image_list
+        	if [ $? -eq 0 ]
+        	then
+	                image_id=`cat /tmp/image_list | grep "$OS"-hdp-"$CLUSTER_VERSION" | cut -d "|" -f3 | xargs`
+        	else
+	                dt=$(date "+%Y-%m-%d-%H.%M")
+        	        curl http://$REPO_SERVER/os_images.txt > /tmp/os_images_$dt.txt 2> /dev/null
+                	source /tmp/os_images_$dt.txt
+
+	                req_os_distro=$(echo $OS | awk -F"[0-9]" '{print $1}'| xargs| tr '[:lower:]' '[:upper:]')
+        	        req_os_ver=$(echo $OS | awk -F"[a-z]" '{$1="";print $0}'|awk -F '.' '{print $1$2}'| xargs| tr '[:lower:]' '[:upper:]')
+                	req_os_distro=$req_os_distro\_$req_os_ver
+	                eval req_os_distro=\$$req_os_distro
+        	        if [ -z "$req_os_distro" ]
+                	then
+                        	printf "\nThe mentioned OS image is unavailable. The available images are:\n"
+	                        cat /tmp/os_images_$dt.txt
+	                        rm -f /tmp/os_images_$dt.txt
+        	                exit 1
+                	fi
+
+               		rm -f /tmp/os_images_$dt.txt
+                	image_id=`cat /tmp/image_list | grep "$req_os_distro" | cut -d "|" -f2,3 | xargs|cut -d'|' -f1|xargs`
+        	fi
+	fi
+	echo $image_id
 }
 
 find_netid()
@@ -270,4 +277,15 @@ boot_clusternodes
 check_vm_state
 populate_hostsfile
 printf "\n"
+
+#If script is running with sandbox template then don't go ahead, quit.
+
+if [ "$SANDBOX_VERSION" != "" ]
+then
+	end_time=`date +%s`
+        start_time=`cat /tmp/start_time`
+        runtime=`echo "($end_time-$start_time)/60"|bc -l`
+	printf "\n\n$(tput setaf 2)$SANDBOX_VERSION is up and running!\n\nPlease note that it may take some time for ssh as services are still starting up.\n\nScript runtime(Including time taken for manual intervention) - $runtime minutes!\n$(tput sgr 0)" 
+	exit 1
+fi
 sh $LOC/setup_cluster.sh $CLUSTER_PROPERTIES
