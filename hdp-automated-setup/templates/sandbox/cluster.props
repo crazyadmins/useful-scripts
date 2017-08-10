@@ -8,6 +8,8 @@ KEYPAIR_NAME=kuldeep-ssh
 PVT_KEYFILE=~/.ssh/id_rsa
 SANDBOX_VERSION=hdf-sandbox-3.0
 
+#Supported values for SANDBOX_VERSION are hdp-sandbox-2.1, hdp-sandbox-2.2, hdp-sandbox-2.3, hdp-sandbox-2.4, hdp-sandbox-2.5, hdp-sandbox-2.6, hdf-sandbox-3.0
+
 #Add your hostnames below ( without FQDN )
 
 HOST1=hdf-sandbox-3.0
