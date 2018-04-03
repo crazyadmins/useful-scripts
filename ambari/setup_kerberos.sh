@@ -69,6 +69,7 @@ create_payload()
           \"encryption_types\": \"aes des3-cbc-sha1 rc4 des-cbc-md5\",
           \"realm\" : \"$REALM\",
           \"kdc_hosts\" : \"$KDC_HOST\",
+          \"kdc_host\" : \"$KDC_HOST\",
           \"admin_server_host\" : \"$KDC_HOST\",
           \"executable_search_paths\" : \"/usr/bin, /usr/kerberos/bin, /usr/sbin, /usr/lib/mit/bin, /usr/lib/mit/sbin\",
           \"password_length\": \"20\",
