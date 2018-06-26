@@ -23,8 +23,13 @@ hostmap()
 #Start of function
 
 echo "{
-  \"blueprint\" : \"$CLUSTERNAME\",
-  \"default_password\" : \"$DEFAULT_PASSWORD\",
+  \"blueprint\" : \"$CLUSTERNAME\","
+
+  if [ "${AMBARIVERSION:0:3}" > "2.6" ]] || [[ "${AMBARIVERSION:0:3}" == "2.6" ]]
+	then
+		echo "\"repository_version_id\" : \"1\","
+	fi
+echo "\"default_password\" : \"$DEFAULT_PASSWORD\",
   \"host_groups\" :["
 
 for HOST in `cat list`
@@ -111,6 +116,7 @@ BASE_URL="http://$REPO_SERVER/hdp/$OS/HDP-$CLUSTER_VERSION/"
 
 echo "{
 \"Repositories\" : {
+   \"repo_name\" : \"HDP-$STACK_VERSION\",
    \"base_url\" : \"$BASE_URL\",
    \"verify_base_url\" : true
 }
@@ -122,7 +128,8 @@ export BASE_URL_UTILS;
 
 echo "{
 \"Repositories\" : {
-   \"base_url\" : \"$BASE_URL_UTILS\",
+   \"repo_name\" : \"HDP-UTILS-$UTILS_VERSION\",
+   \"base_url\" : \"$BASE_URL\",
    \"verify_base_url\" : true
 }
 }" > $LOC/repo-utils.json
@@ -153,9 +160,22 @@ curl -H "X-Requested-By: ambari" -X POST -u admin:admin http://$AMBARI_HOST:8080
 
 }
 
+register_vdf()
+{
+curl -H "X-Requested-By:ambari" -X POST -u admin:admin http://$AMBARI_HOST:8080/api/v1/version_definitions -d '{ "VersionDefinition": { "version_url": "http://'"$REPO_SERVER"'/hdp/'"$OS"'/HDP-'"$CLUSTER_VERSION"'/HDP-'"$CLUSTER_VERSION"'.xml" } }'
+}
+
 #################
 # Main function #
 ################
+
+#Register VDF
+
+if [[ "${AMBARIVERSION:0:3}" > "2.6" ]] || [[ "${AMBARIVERSION:0:3}" == "2.6" ]]
+  then
+  # Required to register VDF for the specific build version
+  register_vdf
+fi
 
 #Generate hostmap
 printf "`timestamp` Generating hostmap json.."

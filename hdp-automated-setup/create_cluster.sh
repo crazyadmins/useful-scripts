@@ -76,8 +76,8 @@ find_image()
 	else 
 		#If single/multi node template is provided then pick snapshot image if available or else go with standard OS image
 
-	        grep "$OS"-hdp-"$CLUSTER_VERSION" /tmp/image_list
-        	if [ $? -eq 0 ]
+	        grep "$OS"-hdp-"$CLUSTER_VERSION" /tmp/image_list 1>/dev/null 2>/dev/null
+        	if [[ $? -eq 0 ]] && [[ "${AMBARIVERSION:0:3}" < "2.6" ]]
         	then
 	                image_id=`cat /tmp/image_list | grep "$OS"-hdp-"$CLUSTER_VERSION" | cut -d "|" -f3 | xargs`
         	else
@@ -129,7 +129,7 @@ boot_clusternodes()
 	{
 		set -e
 		echo "Creating Instance:  [ $HOST ]"
-        	nova boot --image $IMAGE_NAME  --key-name $KEYPAIR_NAME  --flavor $FLAVOR --nic net-id=$NET_ID $OS_USERNAME-$HOST > /dev/null
+        	nova boot --image $IMAGE_NAME  --key-name $KEYPAIR_NAME  --flavor $FLAVOR --nic net-id=$NET_ID $OS_USERNAME-script-$HOST > /dev/null
 		set +e
 	}
 }
@@ -141,10 +141,10 @@ check_for_duplicates()
 
 	for HOST in `grep -w 'HOST[0-9]*' $LOC/$CLUSTER_PROPERTIES|cut -d'=' -f2`
         do
-		echo $existing_nodes | grep -q -w $OS_USERNAME-$HOST
+		echo $existing_nodes | grep -q -w $OS_USERNAME-script-$HOST
 		if [ $? -eq 0 ]
 		then
-			printf "\n\nAn Instance with the name \"$OS_USERNAME-$HOST\" already exists. Please choose unique HostNames\n\n"
+			printf "\n\nAn Instance with the name \"$OS_USERNAME-script-$HOST\" already exists. Please choose unique HostNames\n\n"
 			exit 1
 		fi
 	done
@@ -184,7 +184,7 @@ check_vm_state()
 			echo "$STARTED_VMS" | grep -w -q $HOST
 			if [ "$?" -ne 0 ]
 			then
-				vm_info=`nova show $OS_USERNAME-$HOST | egrep "vm_state|PROVIDER_NET network"`
+				vm_info=`nova show $OS_USERNAME-script-$HOST | egrep "vm_state|PROVIDER_NET network"`
 				#echo $HOST ":" $vm_info
 				echo $vm_info | grep -i -q -w 'active'
 				if [ "$?" -ne 0 ]
@@ -199,7 +199,7 @@ check_vm_state()
 				break
 			fi
 			IP=`echo $vm_info | awk -F'|' '{print $6}' | xargs`
-			echo $IP  $HOST.$DOMAIN_NAME $HOST $OS_USERNAME-$HOST.$DOMAIN_NAME >> /tmp/opst-hosts
+			echo $IP  $HOST.$DOMAIN_NAME $HOST $OS_USERNAME-script-$HOST.$DOMAIN_NAME >> /tmp/opst-hosts
 			STARTUP_STATE=1
 			STARTED_VMS=$STARTED_VMS:$HOST
 			printf "\n$HOST Ok"
@@ -257,6 +257,7 @@ bootstrap_mac
 
 printf "\n\nFinding the required Image\n"
 IMAGE_NAME=$(find_image)
+
 if [ "$?" -ne 0 ]
 then
 	printf "$IMAGE_NAME\n\n"
