@@ -1,0 +1,4 @@
+OOZIE_URL=http://daveranger2.openstacklocal:11000/oozie
+OOZIE_CONF_DIR=/etc/oozie/conf
+OOZIE_LOG_DIR=/var/log/oozie
+KERBEROS_AUTH=no
