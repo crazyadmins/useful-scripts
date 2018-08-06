@@ -131,7 +131,7 @@ configure_kerberos()
 	if [[ "${AMBARI_VERSION:0:3}" > "2.7" ]] || [[ "${AMBARI_VERSION:0:3}" == "2.7" ]]
         then
                 echo -e "\n`ts` Uploading Kerberos Credentials"
-                curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X POST -d '{ "Credential" : { "principal" : "admin/admin@$REALM", "key" : "hadoop", "type" : "temporary" }}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/credentials/kdc.admin.credential
+                curl -H "X-Requested-By:ambari" -u $AMBARI_ADMIN_USER:$AMBARI_ADMIN_PASSWORD -i -X POST -d '{ "Credential" : { "principal" : "admin/admin@'$REALM'", "key" : "hadoop", "type" : "temporary" }}' http://$AMBARI_HOST:8080/api/v1/clusters/$CLUSTER_NAME/credentials/kdc.admin.credential
                 sleep 1
         fi
 	echo -e "\n`ts` Enabling Kerberos"
