@@ -1,0 +1,6 @@
+export OOZIE_URL="http://c111-node3.squadron-labs.com:11000/oozie"
+export COORD_ID="0000000-180820184937979-oozie-oozi-C"
+export TMP_FILE="/tmp/oozie_job_status"
+#Note - Sleep_interval should be in seconds, default is set to 30 minutes i.e. 1800 seconds
+export SLEEP_INTERVAL=1800
+export LOG_FILE="/tmp/oozie_script.log"
